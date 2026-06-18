@@ -1,0 +1,61 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String           @id // Firebase UID
+  email         String           @unique
+  name          String
+  admissionYear Int
+  discipline    String
+  createdAt     DateTime         @default(now())
+  records       AcademicRecord[]
+  isAdmin       Boolean          @default(false)
+}
+
+model Course {
+  id        String           @id
+  title     String
+  credits   Int
+  records   AcademicRecord[]
+  baskets   CourseBasket[]
+}
+
+model CurriculumRequirement {
+  id              Int    @id @default(autoincrement())
+  admissionYear   Int
+  discipline      String
+  basketName      String
+  requiredCredits Int
+
+  @@unique([admissionYear, discipline, basketName])
+}
+
+model CourseBasket {
+  id         Int    @id @default(autoincrement())
+  courseId   String
+  basketName String
+  course     Course @relation(fields: [courseId], references: [id])
+
+  @@unique([courseId, basketName])
+}
+
+model AcademicRecord {
+  id        Int     @id @default(autoincrement())
+  userId    String
+  courseId  String
+  semester  Int
+  grade     String?
+  status    String  // "COMPLETED" or "PLANNED"
+  isHonors  Boolean @default(false)
+  isMinor   Boolean @default(false)
+  user      User    @relation(fields: [userId], references: [id])
+  course    Course  @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+}
