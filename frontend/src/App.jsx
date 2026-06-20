@@ -8,17 +8,30 @@ import BasketTracking from './pages/BasketTracking';
 import Specializations from './pages/Specializations';
 import AdminPanel from './pages/AdminPanel';
 
+// NEW: Import Firebase auth methods
+import { signOut } from 'firebase/auth';
+import { auth } from './firebase'; 
+
 function AppContent() {
   const { currentUser } = useAuth();
   const [currentView, setCurrentView] = useState('dashboard');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile toggle state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (!currentUser) return <Login />;
 
-  // Helper function to handle navigation and close mobile menu
   const handleNav = (view) => {
     setCurrentView(view);
     setIsMobileMenuOpen(false);
+  };
+
+  // NEW: The logout function
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      // As soon as this finishes, currentUser becomes null, and the app automatically renders <Login />
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   const navItems = [
@@ -27,7 +40,7 @@ function AppContent() {
     { id: 'planner', label: 'Semester Planner' },
     { id: 'baskets', label: 'Basket Audit' },
     { id: 'specializations', label: 'Specializations' },
-    { id: 'admin', label: 'Admin', adminOnly: true } // Special styling flag
+    { id: 'admin', label: 'Admin', adminOnly: true }
   ];
 
   return (
@@ -42,7 +55,7 @@ function AppContent() {
               IITGN<span className="text-white">TRACKER</span>
             </div>
 
-            {/* Desktop Menu (Hidden on mobile, flex on medium screens and up) */}
+            {/* Desktop Menu */}
             <div className="hidden md:flex space-x-6 items-center">
               {navItems.map(item => (
                 <button 
@@ -57,15 +70,22 @@ function AppContent() {
                   {item.label}
                 </button>
               ))}
+              
+              {/* NEW: Desktop Logout Button */}
+              <button 
+                onClick={handleLogout}
+                className="ml-4 px-4 py-1.5 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 transition-colors"
+              >
+                Log Out
+              </button>
             </div>
 
-            {/* Mobile Menu Button (Visible only on small screens) */}
+            {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center">
               <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="text-gray-300 hover:text-white focus:outline-none p-2"
               >
-                {/* SVG Hamburger Icon */}
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {isMobileMenuOpen ? (
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -95,6 +115,14 @@ function AppContent() {
                   {item.label}
                 </button>
               ))}
+              
+              {/* NEW: Mobile Logout Button */}
+              <button 
+                onClick={handleLogout}
+                className="block text-left px-3 py-3 mt-2 rounded-md text-base font-medium bg-red-700 text-white hover:bg-red-600 transition-colors"
+              >
+                Log Out
+              </button>
             </div>
           </div>
         )}
