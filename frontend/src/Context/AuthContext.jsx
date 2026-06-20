@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
       const token = await user.getIdToken();
 
       // 3. Sync with our PostgreSQL Backend
-      await axios.post('http://localhost:5000/api/auth/sync', 
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/sync`, 
         { admissionYear, discipline },
         { headers: { Authorization: `Bearer ${token}` } }
       );

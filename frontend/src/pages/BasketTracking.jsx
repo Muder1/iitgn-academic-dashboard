@@ -11,7 +11,7 @@ export default function BasketTracking() {
     const fetchAnalysis = async () => {
       try {
         const token = await currentUser.getIdToken();
-        const res = await axios.get('http://localhost:5000/api/baskets/analysis', {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/baskets/analysis`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setAnalysis(res.data);

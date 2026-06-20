@@ -11,7 +11,7 @@ export default function AdminPanel() {
 
   const fetchCourses = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/records/courses');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/records/courses`);
       setCourses(res.data);
     } catch (err) {
       console.error("Error fetching courses");
@@ -28,7 +28,7 @@ export default function AdminPanel() {
     setError(null);
     try {
       const token = await currentUser.getIdToken();
-      await axios.post('http://localhost:5000/api/admin/courses', formData, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/courses`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage(`Successfully added ${formData.id.toUpperCase()}`);
@@ -45,7 +45,7 @@ export default function AdminPanel() {
     setError(null);
     try {
       const token = await currentUser.getIdToken();
-      await axios.delete(`http://localhost:5000/api/admin/courses/${courseId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/courses/${courseId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchCourses();

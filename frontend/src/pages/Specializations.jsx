@@ -12,7 +12,7 @@ export default function Specializations() {
     const fetchSpecializations = async () => {
       try {
         const token = await currentUser.getIdToken();
-        const res = await axios.get('http://localhost:5000/api/specializations', {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/specializations`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setData(res.data);

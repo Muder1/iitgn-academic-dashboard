@@ -13,14 +13,14 @@ export default function SemesterPlanner() {
       const token = await currentUser.getIdToken();
       
       // Get course catalog
-      const courseRes = await axios.get('http://localhost:5000/api/records/courses');
+      const courseRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/records/courses`);
       setCourses(courseRes.data);
       if (courseRes.data.length > 0 && !formData.courseId) {
         setFormData(prev => ({ ...prev, courseId: courseRes.data[0].id }));
       }
 
       // Get user's planned records
-      const dashboardRes = await axios.get('http://localhost:5000/api/dashboard', {
+      const dashboardRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const planned = dashboardRes.data.records.filter(r => r.status === 'PLANNED');
@@ -37,7 +37,7 @@ export default function SemesterPlanner() {
     e.preventDefault();
     try {
       const token = await currentUser.getIdToken();
-      await axios.post('http://localhost:5000/api/records', {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/records`, {
         ...formData,
         status: 'PLANNED' // Flag this as a future course
       }, {
@@ -52,7 +52,7 @@ export default function SemesterPlanner() {
   const handleDelete = async (recordId) => {
     try {
       const token = await currentUser.getIdToken();
-      await axios.delete(`http://localhost:5000/api/records/${recordId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/records/${recordId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchData(); // Refresh the list

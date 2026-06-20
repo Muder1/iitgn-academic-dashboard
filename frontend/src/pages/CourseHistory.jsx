@@ -6,7 +6,7 @@ export default function CourseHistory() {
   const { currentUser } = useAuth();
   
   // State for the form
-  const [formData, setFormData] = useState({ courseId: '', semester: '1', grade: 'A+' });
+  const [formData, setFormData] = useState({ courseId: '', semester: '1', grade: 'A' });
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
   
@@ -22,7 +22,7 @@ export default function CourseHistory() {
     try {
       const token = await currentUser.getIdToken();
       // We can grab the records from the dashboard route we built earlier!
-      const res = await axios.get('http://localhost:5000/api/dashboard', {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -48,7 +48,7 @@ export default function CourseHistory() {
 
     try {
       const token = await currentUser.getIdToken();
-      await axios.post('http://localhost:5000/api/records', {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/records`, {
         ...formData,
         status: 'COMPLETED'
       }, {
@@ -69,7 +69,7 @@ export default function CourseHistory() {
 
     try {
       const token = await currentUser.getIdToken();
-      await axios.delete(`http://localhost:5000/api/records/${recordId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/records/${recordId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
