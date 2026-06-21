@@ -5,7 +5,8 @@ import axios from 'axios';
 export default function AdminPanel() {
   const { currentUser } = useAuth();
   const [courses, setCourses] = useState([]);
-  const [formData, setFormData] = useState({ id: '', title: '', credits: 4 });
+  
+  const [formData, setFormData] = useState({ code: '', title: '', credits: 4, basket: 'Institute Core', branch: 'All' });
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
 
@@ -31,8 +32,8 @@ export default function AdminPanel() {
       await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/courses`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setMessage(`Successfully added ${formData.id.toUpperCase()}`);
-      setFormData({ id: '', title: '', credits: 4 });
+      setMessage(`Successfully added ${formData.code.toUpperCase()}`);
+      setFormData({ code: '', title: '', credits: 4, basket: 'Institute Core', branch: 'All' });
       fetchCourses();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add course. Are you an admin?');
@@ -40,7 +41,7 @@ export default function AdminPanel() {
   };
 
   const handleDelete = async (courseId) => {
-    if (!window.confirm(`Are you sure you want to permanently delete ${courseId} from the master catalog?`)) return;
+    if (!window.confirm(`Are you sure you want to permanently delete this course from the master catalog?`)) return;
     
     setError(null);
     try {
@@ -74,7 +75,7 @@ export default function AdminPanel() {
           <form onSubmit={handleAddCourse} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Course Code</label>
-              <input type="text" required placeholder="e.g. EE410" className="w-full p-2 border rounded bg-gray-50 uppercase" value={formData.id} onChange={(e) => setFormData({...formData, id: e.target.value})} />
+              <input type="text" required placeholder="e.g. EE410" className="w-full p-2 border rounded bg-gray-50 uppercase" value={formData.code} onChange={(e) => setFormData({...formData, code: e.target.value})} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Course Title</label>
@@ -82,7 +83,7 @@ export default function AdminPanel() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Credits</label>
-              <input type="number" required min="1" max="10" className="w-full p-2 border rounded bg-gray-50" value={formData.credits} onChange={(e) => setFormData({...formData, credits: e.target.value})} />
+              <input type="number" required min="1" max="10" className="w-full p-2 border rounded bg-gray-50" value={formData.credits} onChange={(e) => setFormData({...formData, credits: parseInt(e.target.value)})} />
             </div>
             <button type="submit" className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded hover:bg-red-700 transition">
               Add to Catalog
@@ -95,7 +96,7 @@ export default function AdminPanel() {
           <h3 className="font-bold text-lg mb-4 border-b pb-2">Master Course Directory ({courses.length})</h3>
           <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
             {courses.map(c => (
-              <div key={c.code} className="flex justify-between items-center p-3 bg-gray-50 rounded border border-gray-100 hover:bg-gray-100 transition">
+              <div key={c.id} className="flex justify-between items-center p-3 bg-gray-50 rounded border border-gray-100 hover:bg-gray-100 transition">
                 <div>
                   <span className="font-bold text-gray-800 w-20 inline-block">{c.code}</span>
                   <span className="text-gray-600">{c.title}</span>
