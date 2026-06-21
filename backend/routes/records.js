@@ -15,7 +15,7 @@ router.get('/courses', async (req, res) => {
   }
 });
 
-// POST /api/records (Now supports Honors/Minors)
+// POST /api/records
 router.post('/', verifyIITGN, async (req, res) => {
   try {
     const { courseId, semester, grade, status, isHonors, isMinor } = req.body;
@@ -27,8 +27,8 @@ router.post('/', verifyIITGN, async (req, res) => {
         semester: parseInt(semester),
         grade: grade || null,
         status: status || 'COMPLETED',
-        isHonors: isHonors || false, // New!
-        isMinor: isMinor || false    // New!
+        isHonors: isHonors || false,
+        isMinor: isMinor || false
       }
     });
 

@@ -5,7 +5,7 @@ const verifyIITGN = require('../middleware/auth');
 
 const prisma = new PrismaClient();
 
-// Your specific grading scale mapped to 10-point numbers
+// Grading scale mapped to 10-point numbers
 const gradePoints = {
   'A+': 11,
   'A': 10,
@@ -38,7 +38,7 @@ router.get('/', verifyIITGN, async (req, res) => {
     const plannedCredits = plannedRecords.reduce((sum, r) => sum + (r.course?.credits || 0), 0);
     const targetCredits = 172; 
 
-    // --- NEW: CGPA CALCULATION ENGINE ---
+    // CGPA CALCULATION ENGINE
     let totalQualityPoints = 0;
     let totalGradedCredits = 0;
 
@@ -70,7 +70,7 @@ router.get('/', verifyIITGN, async (req, res) => {
         plannedCredits,
         targetCredits,
         coursesTaken: completedRecords.length,
-        cgpa: currentCGPA // Sending the new CGPA to the frontend!
+        cgpa: currentCGPA // Sending the CGPA to the frontend!
       },
       records: user.records
     });

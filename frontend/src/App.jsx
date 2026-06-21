@@ -8,7 +8,6 @@ import BasketTracking from './pages/BasketTracking';
 import Specializations from './pages/Specializations';
 import AdminPanel from './pages/AdminPanel';
 
-// NEW: Import Firebase auth methods
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase'; 
 
@@ -24,11 +23,9 @@ function AppContent() {
     setIsMobileMenuOpen(false);
   };
 
-  // NEW: The logout function
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      // As soon as this finishes, currentUser becomes null, and the app automatically renders <Login />
     } catch (error) {
       console.error("Error logging out:", error);
     }
@@ -50,7 +47,7 @@ function AppContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             
-            {/* Branding / Logo */}
+            {/* Logo */}
             <div className="flex-shrink-0 font-bold text-xl tracking-wider text-orange-400">
               IITGN<span className="text-white">TRACKER</span>
             </div>
@@ -71,7 +68,7 @@ function AppContent() {
                 </button>
               ))}
               
-              {/* NEW: Desktop Logout Button */}
+              {/* Desktop Logout Button */}
               <button 
                 onClick={handleLogout}
                 className="ml-4 px-4 py-1.5 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 transition-colors"
@@ -116,7 +113,7 @@ function AppContent() {
                 </button>
               ))}
               
-              {/* NEW: Mobile Logout Button */}
+              {/* Mobile Logout Button */}
               <button 
                 onClick={handleLogout}
                 className="block text-left px-3 py-3 mt-2 rounded-md text-base font-medium bg-red-700 text-white hover:bg-red-600 transition-colors"

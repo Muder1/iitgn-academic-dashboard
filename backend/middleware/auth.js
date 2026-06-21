@@ -1,13 +1,13 @@
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-// Initialize Firebase Admin properly with the new modular API
+// Initialize Firebase Admin
 try {
   initializeApp({
     credential: cert(serviceAccount)
   });
 } catch (error) {
-  // Ignore the "default app already exists" error that sometimes happens with Nodemon restarts
+  // Ignore the "default app already exists
   if (!/already exists/.test(error.message)) {
     console.error('Firebase initialization error', error.stack);
   }

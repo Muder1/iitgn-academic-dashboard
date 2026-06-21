@@ -6,7 +6,7 @@ export default function Specializations() {
   const { currentUser } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // New error tracker
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchSpecializations = async () => {
@@ -18,7 +18,6 @@ export default function Specializations() {
         setData(res.data);
       } catch (err) {
         console.error("Network Error:", err);
-        // If the backend refuses the connection, we catch it here
         setError(err.response?.status === 404 ? "Route not found. Check server.js!" : err.message);
       } finally {
         setLoading(false);
@@ -36,7 +35,6 @@ export default function Specializations() {
   if (!data) return <div className="p-8 text-center text-red-600 font-bold mt-10 bg-red-50 border border-red-200 rounded max-w-2xl mx-auto">Critical Error: Backend returned null data.</div>;
   if (!data.honors || !data.minor) return <div className="p-8 text-center text-red-600 font-bold mt-10 bg-red-50 border border-red-200 rounded max-w-2xl mx-auto">Critical Error: Backend returned malformed data. Expected 'honors' and 'minor' objects.</div>;
 
-  // If it survives the checks above, it is safe to render
   const renderCard = (title, specData, colorClass, bgClass) => {
     const progress = Math.min(100, (specData.creditsEarned / specData.required) * 100);
     

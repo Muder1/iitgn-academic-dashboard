@@ -14,14 +14,13 @@ export default function CourseHistory() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Your custom grading scale
+  // Custom grading scale
   const gradingScale = ['A+', 'A', 'A-', 'B', 'B-', 'C-', 'D', 'F'];
 
   // 1. Fetch existing records on load
   const fetchRecords = async () => {
     try {
       const token = await currentUser.getIdToken();
-      // We can grab the records from the dashboard route we built earlier!
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });

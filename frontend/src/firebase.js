@@ -1,7 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
-// REPLACE THESE WITH YOUR ACTUAL FIREBASE CONFIG VALUES
 const firebaseConfig = {
   apiKey: "AIzaSyDJBgp8sUFvg5HZ5E7lB80mwwEBupftMVs",
   authDomain: "iitgn-academic-dashboard.firebaseapp.com",
@@ -15,5 +14,4 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 
-// Optional: Force users to select an account every time
 provider.setCustomParameters({ prompt: 'select_account' });

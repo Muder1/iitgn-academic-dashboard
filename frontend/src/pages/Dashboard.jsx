@@ -46,11 +46,10 @@ const plannedPercentage = Math.min(100 - completedPercentage, (data.stats.planne
       </nav>
 
       {/* Main Content */}
-      {/* Main Content */}
       <main className="max-w-6xl mx-auto p-4 md:p-8">
         <h2 className="text-2xl font-bold mb-6">Semester Overview</h2>
         
-        {/* Metric Cards - UPDATED TO 4 COLUMNS */}
+        {/* Metric Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           
           {/* NEW CGPA CARD */}

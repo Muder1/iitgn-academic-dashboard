@@ -62,7 +62,7 @@ export default function BasketTracking() {
                 </div>
               </div>
 
-              {/* Collapsible/List details for courses inside this basket */}
+              {/* Collapsible List details for courses inside this basket */}
               <div className="bg-gray-50 p-3 rounded-lg text-xs space-y-1 max-h-24 overflow-y-auto">
                 <p className="text-gray-400 font-medium uppercase tracking-wider mb-1">Allocated Courses</p>
                 {data.courses.length === 0 ? (

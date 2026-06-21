@@ -11,7 +11,6 @@ export default function Login() {
     setError('');
     try {
       await login(admissionYear, discipline);
-      // We will redirect to the dashboard here later
       alert("Successfully logged in and synced with backend!");
     } catch (err) {
       setError(err.message || 'Failed to log in');

@@ -17,16 +17,16 @@ const app = express();
 // --- UPDATED CORS CONFIGURATION ---
 const corsOptions = {
   origin: [
-    'http://localhost:5173', // Keeps your local laptop development working
+    'http://localhost:5173', // Local evelopment Port
     'http://localhost:3000', // Alternative local port
-    'https://iitgn-academic-dashboard-frontend.vercel.app' // CRITICAL: Replace this string with your exact Vercel URL!
+    'https://iitgn-academic-dashboard-frontend.vercel.app' // Frontend URL
   ],
-  credentials: true, // Required if you are passing cookies or Firebase auth headers
+  credentials: true,
   optionsSuccessStatus: 200
 };
 
 // Middleware
-app.use(cors(corsOptions)); // Allows your React frontend to communicate with this backend securely
+app.use(cors(corsOptions)); // Allows React frontend to communicate with backend securely
 app.use(express.json()); // Allows the server to accept JSON data
 
 // Routes
