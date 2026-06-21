@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
@@ -20,9 +20,12 @@ model User {
 }
 
 model Course {
-  id        String           @id
+  id        String           @id @default(uuid())
+  code      String           @unique // NEW: Added code (e.g., "HS 191")
   title     String
   credits   Int
+  basket    String           // NEW: Added basket classification
+  branch    String           // NEW: Added branch specific tracking
   records   AcademicRecord[]
   baskets   CourseBasket[]
 }

@@ -1,127 +1,176 @@
+// seed.js
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+const courses = [
+  // ==========================================
+  // 1. INSTITUTE LEVEL MANDATORY COURSES
+  // ==========================================
+  { code: 'HS 191', title: 'Introduction to Writing I', credits: 2, basket: 'Institute Core', branch: 'All' },
+  { code: 'HS 192', title: 'Introduction to Writing II', credits: 2, basket: 'Institute Core', branch: 'All' },
+  { code: 'HS 151', title: 'Economics', credits: 4, basket: 'Institute Core', branch: 'All' },
+  { code: 'HS 221', title: 'Introduction to Philosophy', credits: 4, basket: 'Institute Core', branch: 'All' },
+  { code: 'HS 201', title: 'World Civilizations and Cultures', credits: 4, basket: 'Institute Core', branch: 'All' },
+  { code: 'MA 103', title: 'Calculus of Single Variable & Linear Algebra', credits: 4, basket: 'Institute Core', branch: 'All' },
+  { code: 'MA 104', title: 'Ordinary Differential Equations', credits: 2, basket: 'Institute Core', branch: 'All' },
+  { code: 'MA 203', title: 'Numerical Methods', credits: 2, basket: 'Institute Core', branch: 'All' },
+  { code: 'ES 101', title: 'Engineering Graphics', credits: 3, basket: 'Institute Core', branch: 'All' },
+  { code: 'ES 112', title: 'Computing', credits: 3, basket: 'Institute Core', branch: 'All' },
+  { code: 'ES 113', title: 'Data Centric Computing', credits: 3, basket: 'Institute Core', branch: 'All' },
+  { code: 'ES 119', title: 'Principles of Artificial Intelligence', credits: 4, basket: 'Institute Core', branch: 'All' },
+  { code: 'ES 114', title: 'Probability, Statistics and Data Visualization', credits: 3, basket: 'Institute Core', branch: 'All' },
+  { code: 'ES 115', title: 'Design, Innovation and Prototyping', credits: 5, basket: 'Institute Core', branch: 'All' },
+  { code: 'ES 116', title: 'Principles and Applications of Electrical Engineering', credits: 5, basket: 'Institute Core', branch: 'All' },
+  { code: 'ES 117', title: 'The World of Engineering', credits: 2, basket: 'Institute Core', branch: 'All' },
+  { code: 'ES 243', title: 'Biology for Engineers', credits: 4, basket: 'Institute Core', branch: 'All' },
+  { code: 'BS 192', title: 'Undergraduate Science Laboratory', credits: 3, basket: 'Institute Core', branch: 'All' },
+  
+  // ==========================================
+  // 2. MATERIALS ENGINEERING BASKET
+  // ==========================================
+  { code: 'ES 118', title: 'Materials for the Future', credits: 3, basket: 'Materials Engineering Basket', branch: 'All' },
+  { code: 'MSE 211', title: 'Material Characterization Techniques', credits: 3, basket: 'Materials Engineering Basket', branch: 'All' },
+
+  // ==========================================
+  // 3. ARTIFICIAL INTELLIGENCE (CORE)
+  // ==========================================
+  { code: 'ES 242', title: 'Data Structures & Algorithms I', credits: 4, basket: 'Discipline Core', branch: 'Artificial Intelligence' },
+  { code: 'ES 244', title: 'Signals, Systems & Random Processes', credits: 4, basket: 'Discipline Core', branch: 'Artificial Intelligence' },
+  { code: 'ES 204', title: 'Digital Systems', credits: 4, basket: 'Discipline Core', branch: 'Artificial Intelligence' },
+  { code: 'CS 201', title: 'Theory of Computing', credits: 4, basket: 'Discipline Core', branch: 'Artificial Intelligence' },
+  { code: 'CS 303', title: 'Mathematical Foundations for AI', credits: 4, basket: 'Discipline Core', branch: 'Artificial Intelligence' },
+  { code: 'ES 245', title: 'Control Systems', credits: 4, basket: 'Discipline Core', branch: 'Artificial Intelligence' },
+  { code: 'CS 203', title: 'Software Tools & Techniques for AI', credits: 4, basket: 'Discipline Core', branch: 'Artificial Intelligence' },
+  { code: 'ES 336', title: 'Computer Organization & Architecture', credits: 4, basket: 'Discipline Core', branch: 'Artificial Intelligence' },
+  { code: 'CS 329', title: 'Foundations of AI: Multiagent Systems', credits: 4, basket: 'Discipline Core', branch: 'Artificial Intelligence' },
+  { code: 'ES 335', title: 'Machine Learning', credits: 4, basket: 'Discipline Core', branch: 'Artificial Intelligence' },
+  { code: 'CS 328', title: 'Introduction to Data Science', credits: 4, basket: 'Discipline Core', branch: 'Artificial Intelligence' },
+
+  // ==========================================
+  // 4. CHEMICAL ENGINEERING (CORE)
+  // ==========================================
+  { code: 'ES 211', title: 'Thermodynamics', credits: 3, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+  { code: 'CL 201', title: 'Chemical Process Calculations', credits: 3, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+  { code: 'CL 202', title: 'Chemical Engineering Thermodynamics', credits: 3, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+  { code: 'CL 203', title: 'Process Fluid Mechanics', credits: 3, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+  { code: 'CL 205', title: 'Chemical Reaction Engineering I', credits: 3, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+  { code: 'CL 204', title: 'Heat Transfer', credits: 3, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+  { code: 'CL 313', title: 'Chemical Reaction Engineering II', credits: 3, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+  { code: 'CL 314', title: 'Separation Processes I', credits: 3, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+  { code: 'CL 315', title: 'Process Dynamics & Control', credits: 3, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+  { code: 'CL 326', title: 'Integrated Chemical Engineering Lab-I', credits: 3, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+  { code: 'CL 316', title: 'Separation Processes II', credits: 3, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+  { code: 'CL 317', title: 'Process Synthesis, Design & Simulation', credits: 4, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+  { code: 'CL 325', title: 'Transport Phenomena', credits: 3, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+  { code: 'CL 327', title: 'Integrated Chemical Engineering Lab-II', credits: 2, basket: 'Discipline Core', branch: 'Chemical Engineering' },
+
+  // ==========================================
+  // 5. CIVIL ENGINEERING (CORE)
+  // ==========================================
+  { code: 'ES 221', title: 'Mechanics of Solids', credits: 4, basket: 'Discipline Core', branch: 'Civil Engineering' },
+  { code: 'CE 201', title: 'Earth Materials & Processes', credits: 2, basket: 'Discipline Core', branch: 'Civil Engineering' },
+  { code: 'CE 203', title: 'Geospatial Engineering', credits: 3, basket: 'Discipline Core', branch: 'Civil Engineering' },
+  { code: 'CE 302', title: 'Structural Analysis', credits: 4, basket: 'Discipline Core', branch: 'Civil Engineering' },
+  { code: 'ES 212', title: 'Fluid Mechanics', credits: 4, basket: 'Discipline Core', branch: 'Civil Engineering' },
+  { code: 'CE 202', title: 'Sustainability & Environment', credits: 3, basket: 'Discipline Core', branch: 'Civil Engineering' },
+  { code: 'CE 310', title: 'Hydrology & Hydraulics', credits: 4, basket: 'Discipline Core', branch: 'Civil Engineering' },
+  { code: 'CE 312', title: 'Design of Steel Structures', credits: 4, basket: 'Discipline Core', branch: 'Civil Engineering' },
+  { code: 'CE 301', title: 'Soil Mechanics', credits: 5, basket: 'Discipline Core', branch: 'Civil Engineering' },
+  { code: 'CE 311', title: 'Design of Reinforced Concrete Structures', credits: 5, basket: 'Discipline Core', branch: 'Civil Engineering' },
+  { code: 'CE 403', title: 'Construction Technology & Management', credits: 4, basket: 'Discipline Core', branch: 'Civil Engineering' },
+
+  // ==========================================
+  // 6. COMPUTER SCIENCE & ENGINEERING (CORE)
+  // ==========================================
+  { code: 'ES 242', title: 'Data Structures & Algorithms I', credits: 4, basket: 'Discipline Core', branch: 'Computer Science & Engineering' },
+  { code: 'ES 214', title: 'Discrete Mathematics', credits: 4, basket: 'Discipline Core', branch: 'Computer Science & Engineering' },
+  { code: 'ES 204', title: 'Digital Systems', credits: 4, basket: 'Discipline Core', branch: 'Computer Science & Engineering' },
+  { code: 'ES 336', title: 'Computer Organization & Architecture', credits: 4, basket: 'Discipline Core', branch: 'Computer Science & Engineering' },
+  { code: 'CS 201', title: 'Theory of Computing', credits: 4, basket: 'Discipline Core', branch: 'Computer Science & Engineering' },
+  { code: 'CS 330', title: 'Operating Systems', credits: 4, basket: 'Discipline Core', branch: 'Computer Science & Engineering' },
+  { code: 'CS 202', title: 'Software Tools and Techniques for CSE', credits: 4, basket: 'Discipline Core', branch: 'Computer Science & Engineering' },
+  { code: 'CS 329', title: 'Foundations of AI: Multiagent Systems', credits: 4, basket: 'Discipline Core', branch: 'Computer Science & Engineering' },
+  { code: 'CS 331', title: 'Computer Networks', credits: 4, basket: 'Discipline Core', branch: 'Computer Science & Engineering' },
+
+  // ==========================================
+  // 7. ELECTRICAL ENGINEERING (CORE)
+  // ==========================================
+  { code: 'ES 244', title: 'Signals, Systems & Random Processes', credits: 4, basket: 'Discipline Core', branch: 'Electrical Engineering' },
+  { code: 'EE 221', title: 'Electronic Devices', credits: 3, basket: 'Discipline Core', branch: 'Electrical Engineering' },
+  { code: 'EE 226', title: 'Semiconductor Devices', credits: 4, basket: 'Discipline Core', branch: 'Electrical Engineering' },
+  { code: 'EE 223', title: 'Electrical Machines', credits: 4, basket: 'Discipline Core', branch: 'Electrical Engineering' },
+  { code: 'EE 224', title: 'Power Systems', credits: 4, basket: 'Discipline Core', branch: 'Electrical Engineering' },
+  { code: 'ES 245', title: 'Control Systems', credits: 4, basket: 'Discipline Core', branch: 'Electrical Engineering' },
+  { code: 'ES 204', title: 'Digital Systems', credits: 4, basket: 'Discipline Core', branch: 'Electrical Engineering' },
+  { code: 'EE 312', title: 'Engineering Electromagnetics', credits: 4, basket: 'Discipline Core', branch: 'Electrical Engineering' },
+  { code: 'EE 322', title: 'Analog & Mixed Signal Circuits', credits: 4, basket: 'Discipline Core', branch: 'Electrical Engineering' },
+  { code: 'EE 333', title: 'Power Electronics', credits: 4, basket: 'Discipline Core', branch: 'Electrical Engineering' },
+  { code: 'EE 323', title: 'Digital Signal Processing', credits: 4, basket: 'Discipline Core', branch: 'Electrical Engineering' },
+  { code: 'EE 341', title: 'Communication Systems', credits: 4, basket: 'Discipline Core', branch: 'Electrical Engineering' },
+
+  // ==========================================
+  // 8. INTEGRATED CIRCUIT DESIGN & TECHNOLOGY (CORE)
+  // ==========================================
+  { code: 'EE 225', title: 'Unveiling the Semiconductor World', credits: 2, basket: 'Discipline Core', branch: 'Integrated Circuit Design & Technology' },
+  { code: 'ES 244', title: 'Signals, Systems & Random Processes', credits: 4, basket: 'Discipline Core', branch: 'Integrated Circuit Design & Technology' },
+  { code: 'ES 336', title: 'Computer Organization & Architecture', credits: 4, basket: 'Discipline Core', branch: 'Integrated Circuit Design & Technology' },
+  { code: 'ES 204', title: 'Digital Systems', credits: 4, basket: 'Discipline Core', branch: 'Integrated Circuit Design & Technology' },
+  { code: 'EE 322', title: 'Analog & Mixed Signal Circuits', credits: 4, basket: 'Discipline Core', branch: 'Integrated Circuit Design & Technology' },
+  { code: 'EE 227', title: 'CMOS Circuit Design', credits: 4, basket: 'Discipline Core', branch: 'Integrated Circuit Design & Technology' },
+  { code: 'EE 226', title: 'Semiconductor Devices', credits: 4, basket: 'Discipline Core', branch: 'Integrated Circuit Design & Technology' },
+  { code: 'TBD', title: 'Semiconductor Material & Device Characterization', credits: 4, basket: 'Discipline Core', branch: 'Integrated Circuit Design & Technology' },
+  { code: 'ES 247', title: 'IC Fabrication & Manufacturing', credits: 4, basket: 'Discipline Core', branch: 'Integrated Circuit Design & Technology' },
+  { code: 'TBD', title: 'Thin Film Science & Vacuum Technology', credits: 4, basket: 'Discipline Core', branch: 'Integrated Circuit Design & Technology' },
+  { code: 'TBD', title: 'IC Fabrication Lab', credits: 2, basket: 'Discipline Core', branch: 'Integrated Circuit Design & Technology' },
+  { code: 'TBD', title: 'Semiconductor Package Assembly & Manufacturing', credits: 4, basket: 'Discipline Core', branch: 'Integrated Circuit Design & Technology' },
+
+  // ==========================================
+  // 9. MATERIALS ENGINEERING (CORE)
+  // ==========================================
+  { code: 'MSE 207', title: 'Structure of Materials', credits: 4, basket: 'Discipline Core', branch: 'Materials Engineering' },
+  { code: 'MSE 202', title: 'Materials Thermodynamics', credits: 4, basket: 'Discipline Core', branch: 'Materials Engineering' },
+  { code: 'MSE 204', title: 'Transport Phenomena in Materials Engineering', credits: 4, basket: 'Discipline Core', branch: 'Materials Engineering' },
+  { code: 'MSE 210', title: 'Microstructural Engineering', credits: 4, basket: 'Discipline Core', branch: 'Materials Engineering' },
+  { code: 'MSE 206', title: 'Physics of Materials', credits: 4, basket: 'Discipline Core', branch: 'Materials Engineering' },
+  { code: 'MSE 203', title: 'Integrated Computational Materials Engineering', credits: 4, basket: 'Discipline Core', branch: 'Materials Engineering' },
+  { code: 'MSE 205', title: 'Mechanical Behaviour of Materials', credits: 4, basket: 'Discipline Core', branch: 'Materials Engineering' },
+  { code: 'MSE 313', title: 'Polymers, Ceramics and Composites', credits: 4, basket: 'Discipline Core', branch: 'Materials Engineering' },
+  { code: 'MSE 307', title: 'Materials Processing', credits: 4, basket: 'Discipline Core', branch: 'Materials Engineering' },
+  { code: 'MSE 302', title: 'Corrosion & Degradation of Materials', credits: 4, basket: 'Discipline Core', branch: 'Materials Engineering' },
+  { code: 'MSE 312', title: 'Materials & Environment', credits: 2, basket: 'Discipline Core', branch: 'Materials Engineering' },
+
+  // ==========================================
+  // 10. MECHANICAL ENGINEERING (CORE)
+  // ==========================================
+  { code: 'ES 211', title: 'Thermodynamics', credits: 3, basket: 'Discipline Core', branch: 'Mechanical Engineering' },
+  { code: 'ME 206', title: 'Statics & Dynamics', credits: 4, basket: 'Discipline Core', branch: 'Mechanical Engineering' },
+  { code: 'ME 207', title: 'Fluid Dynamics', credits: 5, basket: 'Discipline Core', branch: 'Mechanical Engineering' },
+  { code: 'ES 221', title: 'Mechanics of Solids', credits: 4, basket: 'Discipline Core', branch: 'Mechanical Engineering' },
+  { code: 'ME 209', title: 'Principles of Manufacturing Processes', credits: 3, basket: 'Discipline Core', branch: 'Mechanical Engineering' },
+  { code: 'ME 208', title: 'Vibrations', credits: 2, basket: 'Discipline Core', branch: 'Mechanical Engineering' },
+  { code: 'ME 334', title: 'Heat and Mass Transfer', credits: 4, basket: 'Discipline Core', branch: 'Mechanical Engineering' },
+  { code: 'ME 362', title: 'Introduction to Manufacturing Systems & Metrology', credits: 3, basket: 'Discipline Core', branch: 'Mechanical Engineering' },
+  { code: 'ME 333', title: 'Mechanics of Materials', credits: 3, basket: 'Discipline Core', branch: 'Mechanical Engineering' },
+  { code: 'ES 245', title: 'Control Systems', credits: 4, basket: 'Discipline Core', branch: 'Mechanical Engineering' },
+  { code: 'ME 335', title: 'Synthesis and Analysis of Mechanisms', credits: 3, basket: 'Discipline Core', branch: 'Mechanical Engineering' },
+  { code: 'ME 337', title: 'Mechanical Systems Design', credits: 3, basket: 'Discipline Core', branch: 'Mechanical Engineering' },
+  { code: 'ES 337', title: 'Energy Systems', credits: 3, basket: 'Discipline Core', branch: 'Mechanical Engineering' }
+];
+
 async function main() {
-  console.log("Seeding IITGN Master Course Catalog...");
-
-  const courses = [
-    // Institute Core & Foundation
-    { id: 'FP100', title: 'Foundation Programme', credits: 4 },
-    { id: 'HS191', title: 'Introduction to Writing I', credits: 2 },
-    { id: 'HS192', title: 'Introduction to Writing II', credits: 2 },
-    { id: 'HS151', title: 'Economics', credits: 4 },
-    { id: 'HS201', title: 'World Civilizations and Cultures', credits: 4 },
-    { id: 'HS221', title: 'Introduction to Philosophy', credits: 4 },
-    { id: 'ES101', title: 'Engineering Graphics', credits: 3 },
-    { id: 'ES112', title: 'Computing', credits: 3 },
-    { id: 'ES113', title: 'Data Centric Computing', credits: 3 },
-    { id: 'ES114', title: 'Probability, Statistics and Data Visualization', credits: 3 },
-    { id: 'ES115', title: 'Design, Innovation and Prototyping', credits: 5 },
-    { id: 'ES116', title: 'Principles and Applications of Electrical Engineering', credits: 5 },
-    { id: 'ES117', title: 'The World of Engineering', credits: 2 },
-    { id: 'ES243', title: 'Biology for Engineers', credits: 4 },
-    { id: 'BS192', title: 'Undergraduate Science Laboratory', credits: 3 },
-    { id: 'PE101', title: 'Physical Education I', credits: 0 },
-
-    // Mathematics, Science & Materials Baskets
-    { id: 'MA103', title: 'Calculus of Single Variable & Linear Algebra', credits: 4 },
-    { id: 'MA104', title: 'Ordinary Differential Equations', credits: 2 },
-    { id: 'MA203', title: 'Numerical Methods', credits: 2 },
-    { id: 'ES118', title: 'Materials for the Future', credits: 3 },
-    { id: 'PH201', title: 'Introduction to Electrodynamics', credits: 4 },
-    { id: 'PH203', title: 'Solid State Physics', credits: 4 },
-
-    // Electrical Engineering Core (EE)
-    { id: 'ES244', title: 'Signals, Systems & Random Processes', credits: 4 },
-    { id: 'EE221', title: 'Electronic Devices', credits: 3 },
-    { id: 'EE226', title: 'Semiconductor Devices', credits: 4 },
-    { id: 'EE223', title: 'Electrical Machines', credits: 4 },
-    { id: 'EE224', title: 'Power Systems', credits: 4 },
-    { id: 'ES245', title: 'Control Systems', credits: 4 },
-    { id: 'ES204', title: 'Digital Systems', credits: 4 },
-    { id: 'EE312', title: 'Engineering Electromagnetics', credits: 4 },
-    { id: 'EE322', title: 'Analog & Mixed Signal Circuits', credits: 4 },
-    { id: 'EE333', title: 'Power Electronics', credits: 4 },
-    { id: 'EE323', title: 'Digital Signal Processing', credits: 4 },
-    { id: 'EE341', title: 'Communication Systems', credits: 4 },
-  ];
-
-  // 1. Upsert Courses
-  for (const course of courses) {
-    await prisma.course.upsert({
-      where: { id: course.id },
-      update: course, // Updates credits or titles if they changed
-      create: course,
-    });
-  }
-  console.log(`✅ Inserted ${courses.length} courses.`);
-
-  // 2. Define Basket Mappings
-  const basketMappings = [
-    // Institute Core Mappings
-    { courseId: 'FP100', basketName: 'Institute Core' },
-    { courseId: 'ES101', basketName: 'Institute Core' },
-    { courseId: 'ES112', basketName: 'Institute Core' },
-    { courseId: 'ES113', basketName: 'Institute Core' },
-    { courseId: 'ES114', basketName: 'Institute Core' },
-    { courseId: 'ES115', basketName: 'Institute Core' },
-    { courseId: 'ES116', basketName: 'Institute Core' },
-    { courseId: 'ES117', basketName: 'Institute Core' },
-    { courseId: 'ES243', basketName: 'Institute Core' },
-    { courseId: 'BS192', basketName: 'Institute Core' },
-    { courseId: 'PE101', basketName: 'Institute Core' },
-
-    // HSS Basket Mappings
-    { courseId: 'HS191', basketName: 'Humanities (HSS)' },
-    { courseId: 'HS192', basketName: 'Humanities (HSS)' },
-    { courseId: 'HS151', basketName: 'Humanities (HSS)' },
-    { courseId: 'HS201', basketName: 'Humanities (HSS)' },
-    { courseId: 'HS221', basketName: 'Humanities (HSS)' },
-
-    // Math/Science/Engineering Science Baskets
-    { courseId: 'MA103', basketName: 'Basic Science' }, 
-    { courseId: 'MA104', basketName: 'Basic Science' },
-    { courseId: 'MA203', basketName: 'Basic Science' },
-    { courseId: 'ES118', basketName: 'Engineering Science' },
-    { courseId: 'PH201', basketName: 'Basic Science' },
-    { courseId: 'PH203', basketName: 'Basic Science' },
-
-    // Electrical Engineering Discipline Core Mappings
-    { courseId: 'ES244', basketName: 'Discipline Core' },
-    { courseId: 'EE221', basketName: 'Discipline Core' },
-    { courseId: 'EE226', basketName: 'Discipline Core' },
-    { courseId: 'EE223', basketName: 'Discipline Core' },
-    { courseId: 'EE224', basketName: 'Discipline Core' },
-    { courseId: 'ES245', basketName: 'Discipline Core' },
-    { courseId: 'ES204', basketName: 'Discipline Core' },
-    { courseId: 'EE312', basketName: 'Discipline Core' },
-    { courseId: 'EE322', basketName: 'Discipline Core' },
-    { courseId: 'EE333', basketName: 'Discipline Core' },
-    { courseId: 'EE323', basketName: 'Discipline Core' },
-    { courseId: 'EE341', basketName: 'Discipline Core' }
-  ];
-
-  // 3. Upsert Basket Mappings
-  for (const mapping of basketMappings) {
-    await prisma.courseBasket.upsert({
-      where: {
-        courseId_basketName: {
-          courseId: mapping.courseId,
-          basketName: mapping.basketName
-        }
-      },
-      update: {},
-      create: mapping,
-    });
-  }
-
-  console.log(`✅ Inserted ${basketMappings.length} basket mappings.`);
-  console.log("🚀 Seeding completed successfully!");
+  console.log(`Start seeding ${courses.length} courses...`);
+  
+  const result = await prisma.course.createMany({
+    data: courses,
+    skipDuplicates: true, 
+  });
+  
+  console.log(`Successfully seeded ${result.count} courses.`);
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("Error during seeding: ", e);
     process.exit(1);
   })
   .finally(async () => {

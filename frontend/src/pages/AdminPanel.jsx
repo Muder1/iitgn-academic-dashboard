@@ -95,9 +95,9 @@ export default function AdminPanel() {
           <h3 className="font-bold text-lg mb-4 border-b pb-2">Master Course Directory ({courses.length})</h3>
           <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
             {courses.map(c => (
-              <div key={c.id} className="flex justify-between items-center p-3 bg-gray-50 rounded border border-gray-100 hover:bg-gray-100 transition">
+              <div key={c.code} className="flex justify-between items-center p-3 bg-gray-50 rounded border border-gray-100 hover:bg-gray-100 transition">
                 <div>
-                  <span className="font-bold text-gray-800 w-20 inline-block">{c.id}</span>
+                  <span className="font-bold text-gray-800 w-20 inline-block">{c.code}</span>
                   <span className="text-gray-600">{c.title}</span>
                 </div>
                 <div className="flex items-center gap-4">
