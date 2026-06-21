@@ -10,17 +10,29 @@ export default function CourseHistory() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
   
-  // State for the logged courses list
+  // State for the logged courses list AND master catalog
   const [records, setRecords] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Custom grading scale
   const gradingScale = ['A+', 'A', 'A-', 'B', 'B-', 'C-', 'D', 'F'];
 
-  // 1. Fetch existing records on load
-  const fetchRecords = async () => {
+  // 1. Fetch existing records and master courses on load
+  const fetchData = async () => {
     try {
       const token = await currentUser.getIdToken();
+      
+      // Fetch Master Courses for the Dropdown
+      const courseRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/records/courses`);
+      setCourses(courseRes.data);
+      
+      // Set a default selected course if the list isn't empty
+      if (courseRes.data.length > 0 && !formData.courseId) {
+        setFormData(prev => ({ ...prev, courseId: courseRes.data[0].id }));
+      }
+
+      // Fetch User's Dashboard Records
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -29,14 +41,14 @@ export default function CourseHistory() {
       const completed = res.data.records.filter(r => r.status === 'COMPLETED');
       setRecords(completed);
     } catch (err) {
-      console.error("Error fetching records", err);
+      console.error("Error fetching data", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRecords();
+    fetchData();
   }, [currentUser]);
 
   // 2. Handle Adding a Course
@@ -54,9 +66,8 @@ export default function CourseHistory() {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      setMessage(`Successfully logged ${formData.courseId.toUpperCase()}`);
-      setFormData({ ...formData, courseId: '' }); // Reset course ID input
-      fetchRecords(); // Refresh the list instantly!
+      setMessage(`Successfully logged course!`);
+      fetchData(); // Refresh the list instantly
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add course.');
     }
@@ -95,15 +106,18 @@ export default function CourseHistory() {
           <h3 className="font-bold text-lg mb-4 border-b pb-2">Add Entry</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Course Code</label>
-              <input 
-                type="text" 
+              <label className="block text-sm font-medium text-gray-700 mb-1">Select Course</label>
+              {/* FIXED: Replaced free-text input with safe dropdown */}
+              <select 
                 required 
-                placeholder="e.g. EE204" 
-                className="w-full p-2 border rounded bg-gray-50 uppercase" 
+                className="w-full p-2 border rounded bg-gray-50" 
                 value={formData.courseId} 
                 onChange={(e) => setFormData({...formData, courseId: e.target.value})} 
-              />
+              >
+                {courses.map(c => (
+                  <option key={c.id} value={c.id}>{c.code} - {c.title}</option>
+                ))}
+              </select>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
@@ -148,7 +162,8 @@ export default function CourseHistory() {
               {records.map(record => (
                 <div key={record.id} className="flex justify-between items-center p-3 bg-gray-50 rounded border border-gray-200 hover:bg-gray-100 transition">
                   <div>
-                    <p className="font-bold text-gray-800 text-sm">{record.courseId}</p>
+                    {/* FIXED: Displaying readable code instead of UUID */}
+                    <p className="font-bold text-gray-800 text-sm">{record.course?.code}</p>
                     <p className="text-xs text-gray-500">Sem {record.semester}</p>
                   </div>
                   <div className="flex items-center gap-4">

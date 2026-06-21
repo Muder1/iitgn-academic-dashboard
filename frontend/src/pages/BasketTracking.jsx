@@ -70,7 +70,7 @@ export default function BasketTracking() {
                 ) : (
                   data.courses.map(c => (
                     <div key={c.id} className="flex justify-between text-gray-600">
-                      <span>• {c.id} ({c.credits} Cr)</span>
+                      <span>• {c.code || c.course?.code} ({c.credits} Cr)</span>
                       <span className={c.status === 'COMPLETED' ? 'text-blue-500' : 'text-orange-500 font-medium'}>
                         {c.status.toLowerCase()}
                       </span>

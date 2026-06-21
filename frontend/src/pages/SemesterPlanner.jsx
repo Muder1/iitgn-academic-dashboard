@@ -83,7 +83,7 @@ export default function SemesterPlanner() {
                 onChange={(e) => setFormData({...formData, courseId: e.target.value})}
               >
                 {courses.map(c => (
-                  <option key={c.id} value={c.id}>{c.id} - {c.title}</option>
+                  <option key={c.id} value={c.id}>{c.code} - {c.title}</option>
                 ))}
               </select>
             </div>
@@ -141,7 +141,7 @@ export default function SemesterPlanner() {
               <div key={record.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center hover:shadow-md transition">
                 <div>
                   <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded mr-3">Sem {record.semester}</span>
-                  <span className="font-bold">{record.courseId}</span> - {record.course?.title}
+                  <span className="font-bold">{record.course?.code}</span> - {record.course?.title}
                   <span className="ml-3 text-sm text-gray-500">({record.course?.credits} Credits)</span>
                 </div>
                 <button onClick={() => handleDelete(record.id)} className="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded-full">

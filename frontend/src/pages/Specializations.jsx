@@ -58,7 +58,7 @@ export default function Specializations() {
           ) : (
             specData.courses.map(record => (
               <div key={record.id} className="flex justify-between items-center p-3 bg-gray-50 rounded border border-gray-100">
-                <span className="font-medium text-gray-700">{record.courseId} - {record.course.title}</span>
+                <span className="font-medium text-gray-700">{record.course.code} - {record.course.title}</span>
                 <div className="flex gap-3 text-sm">
                   <span className="text-gray-500">{record.course.credits} Cr</span>
                   <span className={record.status === 'COMPLETED' ? 'text-blue-600 font-medium' : 'text-orange-500 font-medium'}>
