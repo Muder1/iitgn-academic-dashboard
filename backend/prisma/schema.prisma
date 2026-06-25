@@ -58,6 +58,7 @@ model AcademicRecord {
   status    String  // "COMPLETED" or "PLANNED"
   isHonors  Boolean @default(false)
   isMinor   Boolean @default(false)
+  isGraded  Boolean @default(true)
   user      User    @relation(fields: [userId], references: [id])
   course    Course  @relation(fields: [courseId], references: [id])
 
