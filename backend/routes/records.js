@@ -8,7 +8,11 @@ const prisma = new PrismaClient();
 // GET /api/records/courses
 router.get('/courses', async (req, res) => {
   try {
-    const courses = await prisma.course.findMany();
+    const courses = await prisma.course.findMany({
+      orderBy: {
+        code: 'asc'
+      }
+    });
     res.json(courses);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch courses' });
