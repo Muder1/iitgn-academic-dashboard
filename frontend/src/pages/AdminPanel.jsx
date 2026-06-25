@@ -6,7 +6,14 @@ export default function AdminPanel() {
   const { currentUser } = useAuth();
   const [courses, setCourses] = useState([]);
   
-  const [formData, setFormData] = useState({ code: '', title: '', credits: 4, basket: 'Institute Core', branch: 'All' });
+  const [formData, setFormData] = useState({ 
+      code: '', 
+      title: '', 
+      credits: 4, 
+      basket: 'Institute Core', 
+      branch: 'All' 
+    });
+  
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
 
@@ -81,10 +88,37 @@ export default function AdminPanel() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Course Title</label>
               <input type="text" required placeholder="e.g. Microwave Engineering" className="w-full p-2 border rounded bg-gray-50" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Credits</label>
-              <input type="number" required min="1" max="10" className="w-full p-2 border rounded bg-gray-50" value={formData.credits} onChange={(e) => setFormData({...formData, credits: parseInt(e.target.value)})} />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Credits</label>
+                <input type="number" required min="1" max="10" className="w-full p-2 border rounded bg-gray-50" value={formData.credits} onChange={(e) => setFormData({...formData, credits: parseInt(e.target.value)})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+                <select className="w-full p-2 border rounded bg-gray-50" value={formData.branch} onChange={(e) => setFormData({...formData, branch: e.target.value})}>
+                  <option value="All">All</option>
+                  <option value="CSE">CSE</option>
+                  <option value="EE">EE</option>
+                  <option value="ME">ME</option>
+                  <option value="CE">CE</option>
+                  <option value="CH">CH</option>
+                  <option value="AI">AI</option>
+                </select>
+              </div>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Basket</label>
+              <select className="w-full p-2 border rounded bg-gray-50" value={formData.basket} onChange={(e) => setFormData({...formData, basket: e.target.value})}>
+                <option value="Institute Core">Institute Core</option>
+                <option value="Discipline Core">Discipline Core</option>
+                <option value="Discipline Elective">Discipline Elective</option>
+                <option value="Free Elective">Free Elective</option>
+                <option value="Humanities">Humanities</option>
+              </select>
+            </div>
+
             <button type="submit" className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded hover:bg-red-700 transition">
               Add to Catalog
             </button>

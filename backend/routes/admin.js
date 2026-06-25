@@ -22,18 +22,22 @@ const verifyAdmin = async (req, res, next) => {
 // POST /api/admin/courses - Add a new course
 router.post('/courses', verifyIITGN, verifyAdmin, async (req, res) => {
   try {
-    const { id, title, credits } = req.body;
+    const { code, title, credits, basket, branch } = req.body;
     
+    // Create the course once with all 5 required fields
     const newCourse = await prisma.course.create({
       data: { 
-        id: id.toUpperCase(), 
+        code: code.toUpperCase(), // Ensure the code is consistently uppercase
         title, 
-        credits: parseInt(credits) 
+        credits: parseInt(credits), 
+        basket, 
+        branch 
       }
     });
     
     res.status(201).json(newCourse);
   } catch (error) {
+    console.error("Database error:", error); // Helpful for debugging
     if (error.code === 'P2002') return res.status(400).json({ error: 'Course code already exists.' });
     res.status(500).json({ error: 'Failed to create course.' });
   }
