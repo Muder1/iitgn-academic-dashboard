@@ -13,19 +13,24 @@ export default function CourseHistory() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Updated Grading Scale
   const gradingScale = ['A+', 'A', 'A-', 'B', 'B-', 'C-', 'D', 'P', 'F'];
 
   const fetchData = async () => {
     try {
       const token = await currentUser.getIdToken();
-      const courseRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/records/courses`);
-      setCourses(courseRes.data);
       
-      if (courseRes.data.length > 0 && !formData.courseId) {
-        setFormData(prev => ({ ...prev, courseId: courseRes.data[0].id }));
+      // Fetch Master Course Catalog
+      const courseRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/records/courses`);
+      
+      // Sort courses alphabetically by code for a better dropdown experience
+      const sortedCourses = courseRes.data.sort((a, b) => a.code.localeCompare(b.code));
+      setCourses(sortedCourses);
+      
+      if (sortedCourses.length > 0 && !formData.courseId) {
+        setFormData(prev => ({ ...prev, courseId: sortedCourses[0].id }));
       }
 
+      // Fetch User Records
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -48,14 +53,13 @@ export default function CourseHistory() {
     setMessage('');
     setError(null);
 
-    // LOGIC: If Grade is P or F, it is NOT graded for CPI purposes
     const isGraded = !['P', 'F'].includes(formData.grade);
 
     try {
       const token = await currentUser.getIdToken();
       await axios.post(`${import.meta.env.VITE_API_URL}/api/records`, {
         ...formData,
-        isGraded: isGraded, // This is the new field we added to your schema
+        isGraded: isGraded,
         status: 'COMPLETED'
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -92,6 +96,8 @@ export default function CourseHistory() {
       {error && <div className="bg-red-100 text-red-700 p-4 rounded mb-6 font-medium">{error}</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        {/* ADD ENTRY FORM */}
         <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
           <h3 className="font-bold text-lg mb-4 border-b pb-2">Add Entry</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -138,6 +144,7 @@ export default function CourseHistory() {
           </form>
         </div>
 
+        {/* LOGGED HISTORY */}
         <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100">
           <h3 className="font-bold text-lg mb-4 border-b pb-2">Your Logged History</h3>
           
@@ -151,10 +158,13 @@ export default function CourseHistory() {
                 <div key={record.id} className="flex justify-between items-center p-3 bg-gray-50 rounded border border-gray-200">
                   <div>
                     <p className="font-bold text-gray-800 text-sm">{record.course?.code}</p>
-                    <p className="text-xs text-gray-500">Sem {record.semester}</p>
+                    <p className="text-xs text-gray-500">{record.course?.title} • Sem {record.semester}</p>
+                    {/* Fixed: Adding the basket name display safely */}
+                    <span className="text-[10px] uppercase font-bold text-gray-400 mt-1 block">
+                      {record.course?.basket?.name || 'Uncategorized'}
+                    </span>
                   </div>
                   <div className="flex items-center gap-4">
-                    {/* Shows grade; if P/F, it's visually distinct */}
                     <span className={`font-black ${['P', 'F'].includes(record.grade) ? 'text-gray-500' : 'text-blue-700'}`}>
                       {record.grade}
                     </span>

@@ -92,6 +92,45 @@ const plannedPercentage = Math.min(100 - completedPercentage, (data.stats.planne
             <span className="text-orange-500">{Math.round(plannedPercentage)}% Planned</span>
           </div>
         </div>
+        
+        {/* Recent Courses Section */}
+        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mt-8">
+          <h3 className="text-lg font-bold mb-4">Recently Logged Courses</h3>
+          
+          {data.records.length === 0 ? (
+            <p className="text-gray-500 italic">No courses logged yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="text-gray-400 uppercase text-xs border-b">
+                    <th className="pb-2 font-semibold">Course</th>
+                    <th className="pb-2 font-semibold">Title</th>
+                    <th className="pb-2 font-semibold">Basket</th>
+                    <th className="pb-2 font-semibold text-center">Credits</th>
+                    <th className="pb-2 font-semibold text-right">Grade</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {data.records.filter(r => r.status === 'COMPLETED').map((record) => (
+                    <tr key={record.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="py-3 font-bold text-gray-800">{record.course?.code}</td>
+                      <td className="py-3 text-gray-600">{record.course?.title}</td>
+                      
+                      {/* THIS IS THE CRITICAL FIX FOR THE NEW DATABASE SCHEMA */}
+                      <td className="py-3 text-gray-500 text-xs">
+                        {record.course?.basket?.name || 'Uncategorized'}
+                      </td>
+                      
+                      <td className="py-3 text-center text-gray-600">{record.course?.credits}</td>
+                      <td className="py-3 text-right font-black text-blue-700">{record.grade}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

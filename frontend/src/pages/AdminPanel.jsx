@@ -4,30 +4,47 @@ import axios from 'axios';
 
 export default function AdminPanel() {
   const { currentUser } = useAuth();
-  const [courses, setCourses] = useState([]);
   
+  const [courses, setCourses] = useState([]);
+  const [baskets, setBaskets] = useState([]); // NEW: State to hold dynamic baskets
+  
+  // NEW: Updated formData to use basketId and branches string
   const [formData, setFormData] = useState({ 
       code: '', 
       title: '', 
       credits: 4, 
-      basket: 'Institute Core', 
-      branch: 'All' 
+      basketId: '', 
+      branches: '' 
     });
   
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
 
-  const fetchCourses = async () => {
+  const fetchData = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/records/courses`);
-      setCourses(res.data);
+      // Fetch both courses and baskets simultaneously
+      const [courseRes, basketRes] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_API_URL}/api/records/courses`),
+        // Assuming you made a route to fetch baskets. If it's a public route, remove the token.
+        axios.get(`${import.meta.env.VITE_API_URL}/api/admin/baskets`, {
+          headers: { Authorization: `Bearer ${await currentUser.getIdToken()}` }
+        })
+      ]);
+      
+      setCourses(courseRes.data);
+      setBaskets(basketRes.data);
+      
+      // Set the default dropdown value to the first basket's ID
+      if (basketRes.data.length > 0 && !formData.basketId) {
+        setFormData(prev => ({ ...prev, basketId: basketRes.data[0].id }));
+      }
     } catch (err) {
-      console.error("Error fetching courses");
+      console.error("Error fetching admin data", err);
     }
   };
 
   useEffect(() => {
-    fetchCourses();
+    fetchData();
   }, []);
 
   const handleAddCourse = async (e) => {
@@ -40,8 +57,17 @@ export default function AdminPanel() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage(`Successfully added ${formData.code.toUpperCase()}`);
-      setFormData({ code: '', title: '', credits: 4, basket: 'Institute Core', branch: 'All' });
-      fetchCourses();
+      
+      // Reset form but keep the default basket selected
+      setFormData({ 
+        code: '', 
+        title: '', 
+        credits: 4, 
+        basketId: baskets[0]?.id || '', 
+        branches: '' 
+      });
+      
+      fetchData(); // Refresh the list
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add course. Are you an admin?');
     }
@@ -56,7 +82,7 @@ export default function AdminPanel() {
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/courses/${courseId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchCourses();
+      fetchData(); // Refresh the list
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to delete course.');
     }
@@ -82,7 +108,7 @@ export default function AdminPanel() {
           <form onSubmit={handleAddCourse} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Course Code</label>
-              <input type="text" required placeholder="e.g. EE410" className="w-full p-2 border rounded bg-gray-50 uppercase" value={formData.code} onChange={(e) => setFormData({...formData, code: e.target.value})} />
+              <input type="text" required placeholder="e.g. EE 410" className="w-full p-2 border rounded bg-gray-50 uppercase" value={formData.code} onChange={(e) => setFormData({...formData, code: e.target.value})} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Course Title</label>
@@ -94,32 +120,36 @@ export default function AdminPanel() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Credits</label>
                 <input type="number" required min="1" max="10" className="w-full p-2 border rounded bg-gray-50" value={formData.credits} onChange={(e) => setFormData({...formData, credits: parseInt(e.target.value)})} />
               </div>
+              
+              {/* NEW: Dynamic Basket Dropdown */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-                <select className="w-full p-2 border rounded bg-gray-50" value={formData.branch} onChange={(e) => setFormData({...formData, branch: e.target.value})}>
-                  <option value="All">All</option>
-                  <option value="CSE">CSE</option>
-                  <option value="EE">EE</option>
-                  <option value="ME">ME</option>
-                  <option value="CE">CE</option>
-                  <option value="CH">CH</option>
-                  <option value="AI">AI</option>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Basket</label>
+                <select 
+                  className="w-full p-2 border rounded bg-gray-50" 
+                  value={formData.basketId} 
+                  onChange={(e) => setFormData({...formData, basketId: parseInt(e.target.value)})}
+                >
+                  {baskets.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
                 </select>
               </div>
             </div>
 
+            {/* NEW: Branches Array Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Basket</label>
-              <select className="w-full p-2 border rounded bg-gray-50" value={formData.basket} onChange={(e) => setFormData({...formData, basket: e.target.value})}>
-                <option value="Institute Core">Institute Core</option>
-                <option value="Discipline Core">Discipline Core</option>
-                <option value="Discipline Elective">Discipline Elective</option>
-                <option value="Free Elective">Free Elective</option>
-                <option value="Humanities">Humanities</option>
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Branches</label>
+              <input 
+                type="text" 
+                required 
+                placeholder="e.g. AI, EE, ME (comma separated)" 
+                className="w-full p-2 border rounded bg-gray-50" 
+                value={formData.branches} 
+                onChange={(e) => setFormData({...formData, branches: e.target.value})} 
+              />
             </div>
 
-            <button type="submit" className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded hover:bg-red-700 transition">
+            <button type="submit" className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded hover:bg-red-700 transition mt-2">
               Add to Catalog
             </button>
           </form>
@@ -132,11 +162,22 @@ export default function AdminPanel() {
             {courses.map(c => (
               <div key={c.id} className="flex justify-between items-center p-3 bg-gray-50 rounded border border-gray-100 hover:bg-gray-100 transition">
                 <div>
-                  <span className="font-bold text-gray-800 w-20 inline-block">{c.code}</span>
-                  <span className="text-gray-600">{c.title}</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-bold text-gray-800 w-20 inline-block">{c.code}</span>
+                    <span className="text-gray-700 font-medium">{c.title}</span>
+                  </div>
+                  {/* NEW: Displaying the relational basket and branch array data */}
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
+                      {c.basket?.name || 'No Basket'}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {c.branches ? c.branches.join(', ') : 'All'}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-gray-500">{c.credits} Cr</span>
+                  <span className="text-sm font-bold text-gray-600">{c.credits} Cr</span>
                   <button onClick={() => handleDelete(c.id)} className="text-red-500 hover:text-red-700 font-bold px-2 py-1 rounded bg-white border border-red-200 hover:bg-red-50 text-xs">
                     Delete
                   </button>
