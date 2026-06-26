@@ -9,26 +9,38 @@ generator client {
 }
 
 model User {
-  id            String           @id // Firebase UID
+  id            String           @id
   email         String           @unique
   name          String
   admissionYear Int
   discipline    String
+  pursuingHonors Boolean  @default(false)
+  pursuingMinor  String?  // Nullable, e.g., "Artificial Intelligence", "Management"
   createdAt     DateTime         @default(now())
   records       AcademicRecord[]
   isAdmin       Boolean          @default(false)
 }
 
 model Course {
-  id        String           @id @default(uuid())
-  code      String           @unique // NEW: Added code (e.g., "HS 191")
+  id        String   @id @default(uuid())
+  code      String   @unique
   title     String
   credits   Int
-  basket    String           // NEW: Added basket classification
-  branch    String           // NEW: Added branch specific tracking
+  branches  String[] // Array of strings (e.g., ["AI", "EE"])
+  
+  // A course belongs to exactly one basket
+  basketId  Int
+  basket    Basket   @relation(fields: [basketId], references: [id])
+  
   records   AcademicRecord[]
-  baskets   CourseBasket[]
 }
+
+model Basket {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique // e.g., "Humanities", "Science"
+  courses Course[] // One basket has many courses
+}
+
 
 model CurriculumRequirement {
   id              Int    @id @default(autoincrement())
@@ -38,15 +50,6 @@ model CurriculumRequirement {
   requiredCredits Int
 
   @@unique([admissionYear, discipline, basketName])
-}
-
-model CourseBasket {
-  id         Int    @id @default(autoincrement())
-  courseId   String
-  basketName String
-  course     Course @relation(fields: [courseId], references: [id])
-
-  @@unique([courseId, basketName])
 }
 
 model AcademicRecord {

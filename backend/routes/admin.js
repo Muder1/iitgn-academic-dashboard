@@ -19,19 +19,41 @@ const verifyAdmin = async (req, res, next) => {
   }
 };
 
+// ==========================================
+// NEW: GET /api/admin/baskets - Fetch Baskets for Dropdown
+// ==========================================
+router.get('/baskets', verifyIITGN, verifyAdmin, async (req, res) => {
+  try {
+    const baskets = await prisma.basket.findMany({
+      orderBy: { id: 'asc' }
+    });
+    res.json(baskets);
+  } catch (error) {
+    console.error("Database error:", error);
+    res.status(500).json({ error: 'Failed to fetch baskets.' });
+  }
+});
+
+// ==========================================
 // POST /api/admin/courses - Add a new course
+// ==========================================
 router.post('/courses', verifyIITGN, verifyAdmin, async (req, res) => {
   try {
-    const { code, title, credits, basket, branch } = req.body;
+    // FIX 1: Changed 'branch' to 'branches' to match frontend and schema
+    const { code, title, credits, basketId, branches } = req.body;
+
+    const branchArray = Array.isArray(branches) 
+      ? branches 
+      : branches.split(',').map(b => b.trim()).filter(b => b !== '');
     
-    // Create the course once with all 5 required fields
+    // Create the course
     const newCourse = await prisma.course.create({
       data: { 
         code: code.toUpperCase(), // Ensure the code is consistently uppercase
         title, 
         credits: parseInt(credits), 
-        basket, 
-        branch 
+        basketId: parseInt(basketId), 
+        branches: branchArray
       }
     });
     
@@ -43,18 +65,20 @@ router.post('/courses', verifyIITGN, verifyAdmin, async (req, res) => {
   }
 });
 
+// ==========================================
 // DELETE /api/admin/courses/:id - Remove a course
+// ==========================================
 router.delete('/courses/:id', verifyIITGN, verifyAdmin, async (req, res) => {
   try {
     const courseId = req.params.id;
     
-    // Deleting a course might fail if students already have it in their history
-    // We must delete associated CourseBasket mappings first
-    await prisma.courseBasket.deleteMany({ where: { courseId } });
+    // FIX 2: Removed CourseBasket deletion since that table no longer exists!
+    // Note: Deleting a course might still fail if students already have it in their AcademicRecord history.
     await prisma.course.delete({ where: { id: courseId } });
     
     res.status(200).json({ message: 'Course deleted successfully.' });
   } catch (error) {
+    console.error("Database error:", error);
     res.status(500).json({ error: 'Cannot delete course. It may be linked to student records.' });
   }
 });

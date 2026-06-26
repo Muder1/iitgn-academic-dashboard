@@ -9,6 +9,9 @@ const prisma = new PrismaClient();
 router.get('/courses', async (req, res) => {
   try {
     const courses = await prisma.course.findMany({
+      include: {
+        basket: true 
+      },
       orderBy: {
         code: 'asc'
       }

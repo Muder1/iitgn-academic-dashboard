@@ -8,24 +8,27 @@ const prisma = new PrismaClient();
 // GET /api/baskets/analysis
 router.get('/analysis', verifyIITGN, async (req, res) => {
   try {
-    // 1. Fetch user records including course and basket definitions
+    // 1. Fetch user records including course and the SINGLE basket definition
     const records = await prisma.academicRecord.findMany({
       where: { userId: req.user.uid },
       include: {
         course: {
-          include: { baskets: true }
+          // FIX 1: Changed 'baskets' to singular 'basket' to match new schema
+          include: { basket: true } 
         }
       }
     });
 
     // 2. Define standard total credit targets per basket type
+    // FIX 2: Updated these keys to match the actual Baskets we seeded in the database
     const targets = {
-      'Basic Science': 20,
-      'Engineering Science': 24,
-      'Institute Core': 15,
+      'Institute Core': 34, 
       'Discipline Core': 48,
-      'Humanities (HSS)': 20,
-      'Electives': 28
+      'Discipline Elective': 12,
+      'Open Elective': 12,
+      'Humanities': 12,
+      'Math': 8,
+      'Science': 6
     };
 
     // 3. Initialize analysis structure
@@ -36,25 +39,29 @@ router.get('/analysis', verifyIITGN, async (req, res) => {
 
     // 4. Group credits dynamically
     records.forEach(record => {
-      const courseBaskets = record.course?.baskets || [];
       const credits = record.course?.credits || 0;
 
-      // Find which basket this course belongs to, default to Electives if unmapped
-      const basketName = courseBaskets.length > 0 ? courseBaskets[0].basketName : 'Electives';
+      // FIX 3: Pull the name directly from the single linked basket object
+      const basketName = record.course?.basket?.name || 'Open Elective';
 
-      if (analysis[basketName]) {
-        if (record.status === 'COMPLETED') {
-          analysis[basketName].completed += credits;
-        } else if (record.status === 'PLANNED') {
-          analysis[basketName].planned += credits;
-        }
-        analysis[basketName].courses.push({
-          id: record.courseId,
-          title: record.course.title,
-          credits: credits,
-          status: record.status
-        });
+      // Safety check: If a course has a new basket not in our targets list, create a bucket for it dynamically
+      if (!analysis[basketName]) {
+        analysis[basketName] = { completed: 0, planned: 0, required: 0, courses: [] };
       }
+
+      if (record.status === 'COMPLETED') {
+        analysis[basketName].completed += credits;
+      } else if (record.status === 'PLANNED') {
+        analysis[basketName].planned += credits;
+      }
+      
+      analysis[basketName].courses.push({
+        id: record.courseId,
+        code: record.course?.code, // Added code so the frontend bullet points render properly!
+        title: record.course?.title,
+        credits: credits,
+        status: record.status
+      });
     });
 
     res.json(analysis);

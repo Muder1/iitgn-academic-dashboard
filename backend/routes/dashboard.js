@@ -24,7 +24,11 @@ router.get('/', verifyIITGN, async (req, res) => {
       where: { id: req.user.uid },
       include: {
         records: {
-          include: { course: true }
+          include:{
+            course:{
+              include: {basket: true}
+            }
+          }
         }
       }
     });
