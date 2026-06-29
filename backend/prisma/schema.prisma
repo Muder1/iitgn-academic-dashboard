@@ -39,17 +39,21 @@ model Basket {
   id      Int      @id @default(autoincrement())
   name    String   @unique // e.g., "Humanities", "Science"
   courses Course[] // One basket has many courses
+  requirements CurriculumRequirement[]
 }
 
 
 model CurriculumRequirement {
-  id              Int    @id @default(autoincrement())
-  admissionYear   Int
-  discipline      String
-  basketName      String
-  requiredCredits Int
+  id            Int    @id @default(autoincrement())
+  branch        String // e.g., "Computer Science & Engineering", "All"
+  cohortStart   Int    // e.g., 2022, 2025
+  cohortEnd     Int    // e.g., 2024, 2099
+  creditsTarget Int
+  basketId      Int
+  basket        Basket @relation(fields: [basketId], references: [id], onDelete: Cascade)
 
-  @@unique([admissionYear, discipline, basketName])
+  // Ensure no duplicate rules for the same branch, cohort, and basket
+  @@unique([branch, cohortStart, basketId])
 }
 
 model AcademicRecord {
