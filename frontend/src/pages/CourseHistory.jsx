@@ -14,7 +14,7 @@ export default function CourseHistory() {
   const [loading, setLoading] = useState(true);
   const [openSemesters, setOpenSemesters] = useState({});
 
-  const gradingScale = ['A+', 'A', 'A-', 'B', 'B-', 'C-', 'D', 'P', 'F'];
+  const gradingScale = ['A+', 'A', 'A-', 'B', 'B-','C', 'C-', 'D', 'P', 'F'];
 
   const fetchData = async () => {
     try {
