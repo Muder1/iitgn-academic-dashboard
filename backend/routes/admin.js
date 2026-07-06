@@ -117,4 +117,48 @@ router.put('/courses/:id', verifyIITGN, verifyAdmin, async (req, res) => {
   }
 });
 
+// ==========================================
+// POST /api/admin/courses/bulk - Bulk Upload CSV Data
+// ==========================================
+router.post('/courses/bulk', verifyIITGN, verifyAdmin, async (req, res) => {
+  try {
+    const { courses } = req.body;
+    
+    if (!Array.isArray(courses) || courses.length === 0) {
+      return res.status(400).json({ error: 'No course data provided.' });
+    }
+
+    let successCount = 0;
+
+    // Loop through the array and upsert each course
+    for (const course of courses) {
+      // Skip invalid rows where basket wasn't matched or core data is missing
+      if (!course.basketId || !course.code || !course.title) continue;
+
+      await prisma.course.upsert({
+        where: { code: course.code.toUpperCase() },
+        update: {
+          title: course.title,
+          credits: parseInt(course.credits),
+          basketId: parseInt(course.basketId),
+          branches: course.branches
+        },
+        create: {
+          code: course.code.toUpperCase(),
+          title: course.title,
+          credits: parseInt(course.credits),
+          basketId: parseInt(course.basketId),
+          branches: course.branches
+        }
+      });
+      successCount++;
+    }
+
+    res.status(200).json({ message: 'Bulk upload complete', count: successCount });
+  } catch (error) {
+    console.error("Bulk upload error:", error);
+    res.status(500).json({ error: 'Failed to process bulk upload. Check server logs.' });
+  }
+});
+
 module.exports = router;
