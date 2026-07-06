@@ -6,9 +6,9 @@ export default function AdminPanel() {
   const { currentUser } = useAuth();
   
   const [courses, setCourses] = useState([]);
-  const [baskets, setBaskets] = useState([]); // NEW: State to hold dynamic baskets
+  const [baskets, setBaskets] = useState([]); 
+  const [editingCourse, setEditingCourse] = useState(null);
   
-  // NEW: Updated formData to use basketId and branches string
   const [formData, setFormData] = useState({ 
       code: '', 
       title: '', 
@@ -22,10 +22,8 @@ export default function AdminPanel() {
 
   const fetchData = async () => {
     try {
-      // Fetch both courses and baskets simultaneously
       const [courseRes, basketRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/api/records/courses`),
-        // Assuming you made a route to fetch baskets. If it's a public route, remove the token.
         axios.get(`${import.meta.env.VITE_API_URL}/api/admin/baskets`, {
           headers: { Authorization: `Bearer ${await currentUser.getIdToken()}` }
         })
@@ -34,7 +32,6 @@ export default function AdminPanel() {
       setCourses(courseRes.data);
       setBaskets(basketRes.data);
       
-      // Set the default dropdown value to the first basket's ID
       if (basketRes.data.length > 0 && !formData.basketId) {
         setFormData(prev => ({ ...prev, basketId: basketRes.data[0].id }));
       }
@@ -58,7 +55,6 @@ export default function AdminPanel() {
       });
       setMessage(`Successfully added ${formData.code.toUpperCase()}`);
       
-      // Reset form but keep the default basket selected
       setFormData({ 
         code: '', 
         title: '', 
@@ -67,7 +63,7 @@ export default function AdminPanel() {
         branches: '' 
       });
       
-      fetchData(); // Refresh the list
+      fetchData(); 
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add course. Are you an admin?');
     }
@@ -82,10 +78,40 @@ export default function AdminPanel() {
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/courses/${courseId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchData(); // Refresh the list
+      fetchData(); 
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to delete course.');
     }
+  };
+
+  const handleUpdateCourse = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    setError(null);
+    try {
+      const token = await currentUser.getIdToken();
+      
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/courses/${editingCourse.id}`, 
+        editingCourse, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setEditingCourse(null); 
+      fetchData(); // FIXED: Was fetchCourses()
+      setMessage("Course updated successfully!");
+    } catch (error) {
+      setError(error.response?.data?.error || 'Failed to update course');
+    }
+  };
+
+  // Helper to trigger edit mode and format the branches array to a string
+  const startEditing = (course) => {
+    setMessage('');
+    setError(null);
+    setEditingCourse({
+      ...course,
+      branches: course.branches ? course.branches.join(', ') : ''
+    });
   };
 
   return (
@@ -102,58 +128,127 @@ export default function AdminPanel() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         
-        {/* Form to Add Course */}
-        <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200 h-fit">
-          <h3 className="font-bold text-lg mb-4 border-b pb-2">Add New Course</h3>
-          <form onSubmit={handleAddCourse} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Course Code</label>
-              <input type="text" required placeholder="e.g. EE 410" className="w-full p-2 border rounded bg-gray-50 uppercase" value={formData.code} onChange={(e) => setFormData({...formData, code: e.target.value})} />
+        {/* DYNAMIC FORM PANEL: Swaps between Add and Edit */}
+        {editingCourse ? (
+          <div className="bg-blue-50 p-4 md:p-6 rounded-xl shadow-sm border border-blue-200 h-fit">
+            <div className="flex justify-between items-center mb-4 border-b border-blue-200 pb-2">
+              <h3 className="font-bold text-lg text-blue-900">Edit Course</h3>
+              <button 
+                onClick={() => setEditingCourse(null)} 
+                className="text-sm text-blue-600 hover:text-blue-800 font-bold"
+              >
+                Cancel
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Course Title</label>
-              <input type="text" required placeholder="e.g. Microwave Engineering" className="w-full p-2 border rounded bg-gray-50" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleUpdateCourse} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Credits</label>
-                <input type="number" required min="1" max="10" className="w-full p-2 border rounded bg-gray-50" value={formData.credits} onChange={(e) => setFormData({...formData, credits: parseInt(e.target.value)})} />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Course Code</label>
+                <input 
+                  type="text" required 
+                  className="w-full p-2 border border-blue-300 rounded bg-white uppercase" 
+                  value={editingCourse.code} 
+                  onChange={(e) => setEditingCourse({...editingCourse, code: e.target.value})} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Course Title</label>
+                <input 
+                  type="text" required 
+                  className="w-full p-2 border border-blue-300 rounded bg-white" 
+                  value={editingCourse.title} 
+                  onChange={(e) => setEditingCourse({...editingCourse, title: e.target.value})} 
+                />
               </div>
               
-              {/* NEW: Dynamic Basket Dropdown */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Basket</label>
-                <select 
-                  className="w-full p-2 border rounded bg-gray-50" 
-                  value={formData.basketId} 
-                  onChange={(e) => setFormData({...formData, basketId: parseInt(e.target.value)})}
-                >
-                  {baskets.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Credits</label>
+                  <input 
+                    type="number" required min="1" max="10" 
+                    className="w-full p-2 border border-blue-300 rounded bg-white" 
+                    value={editingCourse.credits} 
+                    onChange={(e) => setEditingCourse({...editingCourse, credits: parseInt(e.target.value)})} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Basket</label>
+                  <select 
+                    className="w-full p-2 border border-blue-300 rounded bg-white" 
+                    value={editingCourse.basketId} 
+                    onChange={(e) => setEditingCourse({...editingCourse, basketId: parseInt(e.target.value)})}
+                  >
+                    {baskets.map(b => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            </div>
 
-            {/* NEW: Branches Array Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Branches</label>
-              <input 
-                type="text" 
-                required 
-                placeholder="e.g. AI, EE, ME (comma separated)" 
-                className="w-full p-2 border rounded bg-gray-50" 
-                value={formData.branches} 
-                onChange={(e) => setFormData({...formData, branches: e.target.value})} 
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Branches</label>
+                <input 
+                  type="text" required 
+                  placeholder="e.g. AI, EE, ME" 
+                  className="w-full p-2 border border-blue-300 rounded bg-white" 
+                  value={editingCourse.branches} 
+                  onChange={(e) => setEditingCourse({...editingCourse, branches: e.target.value})} 
+                />
+              </div>
 
-            <button type="submit" className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded hover:bg-red-700 transition mt-2">
-              Add to Catalog
-            </button>
-          </form>
-        </div>
+              <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 transition mt-2 shadow-sm">
+                Save Changes
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200 h-fit">
+            <h3 className="font-bold text-lg mb-4 border-b pb-2">Add New Course</h3>
+            <form onSubmit={handleAddCourse} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Course Code</label>
+                <input type="text" required placeholder="e.g. EE 410" className="w-full p-2 border rounded bg-gray-50 uppercase" value={formData.code} onChange={(e) => setFormData({...formData, code: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Course Title</label>
+                <input type="text" required placeholder="e.g. Microwave Engineering" className="w-full p-2 border rounded bg-gray-50" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Credits</label>
+                  <input type="number" required min="1" max="10" className="w-full p-2 border rounded bg-gray-50" value={formData.credits} onChange={(e) => setFormData({...formData, credits: parseInt(e.target.value)})} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Basket</label>
+                  <select 
+                    className="w-full p-2 border rounded bg-gray-50" 
+                    value={formData.basketId} 
+                    onChange={(e) => setFormData({...formData, basketId: parseInt(e.target.value)})}
+                  >
+                    {baskets.map(b => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Branches</label>
+                <input 
+                  type="text" required 
+                  placeholder="e.g. AI, EE, ME (comma separated)" 
+                  className="w-full p-2 border rounded bg-gray-50" 
+                  value={formData.branches} 
+                  onChange={(e) => setFormData({...formData, branches: e.target.value})} 
+                />
+              </div>
+
+              <button type="submit" className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded hover:bg-red-700 transition mt-2">
+                Add to Catalog
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Master Course List */}
         <div className="md:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
@@ -166,7 +261,6 @@ export default function AdminPanel() {
                     <span className="font-bold text-gray-800 w-20 inline-block">{c.code}</span>
                     <span className="text-gray-700 font-medium">{c.title}</span>
                   </div>
-                  {/* NEW: Displaying the relational basket and branch array data */}
                   <div className="mt-1 flex items-center gap-2">
                     <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
                       {c.basket?.name || 'No Basket'}
@@ -176,9 +270,22 @@ export default function AdminPanel() {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-bold text-gray-600">{c.credits} Cr</span>
-                  <button onClick={() => handleDelete(c.id)} className="text-red-500 hover:text-red-700 font-bold px-2 py-1 rounded bg-white border border-red-200 hover:bg-red-50 text-xs">
+                <div className="flex items-center gap-2 md:gap-4">
+                  <span className="text-sm font-bold text-gray-600 mr-2">{c.credits} Cr</span>
+                  
+                  {/* EDIT BUTTON */}
+                  <button 
+                    onClick={() => startEditing(c)} 
+                    className="text-blue-600 hover:text-blue-800 font-bold px-3 py-1 rounded bg-white border border-blue-200 hover:bg-blue-50 text-xs transition"
+                  >
+                    Edit
+                  </button>
+                  
+                  {/* DELETE BUTTON */}
+                  <button 
+                    onClick={() => handleDelete(c.id)} 
+                    className="text-red-500 hover:text-red-700 font-bold px-3 py-1 rounded bg-white border border-red-200 hover:bg-red-50 text-xs transition"
+                  >
                     Delete
                   </button>
                 </div>

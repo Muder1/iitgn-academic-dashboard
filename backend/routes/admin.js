@@ -83,4 +83,38 @@ router.delete('/courses/:id', verifyIITGN, verifyAdmin, async (req, res) => {
   }
 });
 
+// ==========================================
+// PUT /api/admin/courses/:id - Update an existing course
+// ==========================================
+router.put('/courses/:id', verifyIITGN, verifyAdmin, async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const { code, title, credits, basketId, branches } = req.body;
+
+    // Format branches properly just like in the POST route
+    const branchArray = Array.isArray(branches) 
+      ? branches 
+      : branches.split(',').map(b => b.trim()).filter(b => b !== '');
+    
+    // Update the course in the database
+    const updatedCourse = await prisma.course.update({
+      where: { id: courseId }, // Use parseInt(courseId) if your ID is an integer
+      data: { 
+        code: code.toUpperCase(), 
+        title, 
+        credits: parseInt(credits), 
+        basketId: parseInt(basketId), 
+        branches: branchArray
+      }
+    });
+    
+    res.status(200).json(updatedCourse);
+  } catch (error) {
+    console.error("Database update error:", error);
+    if (error.code === 'P2025') return res.status(404).json({ error: 'Course not found.' });
+    if (error.code === 'P2002') return res.status(400).json({ error: 'Course code already exists.' });
+    res.status(500).json({ error: 'Failed to update course.' });
+  }
+});
+
 module.exports = router;
