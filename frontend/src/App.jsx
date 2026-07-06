@@ -7,6 +7,7 @@ import SemesterPlanner from './pages/SemesterPlanner';
 import BasketTracking from './pages/BasketTracking'; 
 import Specializations from './pages/Specializations';
 import AdminPanel from './pages/AdminPanel';
+import BulkUpload from './pages/BulkUpload';
 
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase'; 
@@ -54,7 +55,7 @@ function AppContent() {
 
   const adminTabs = [
     { id: 'admin', label: 'Master Catalog' },
-    // We will add { id: 'bulk-upload', label: 'Bulk Upload' } here in Step 2!
+    { id: 'upload', label: 'Bulk Upload' }
   ];
 
   const activeTabs = viewMode === 'admin' ? adminTabs : studentTabs;
@@ -174,8 +175,9 @@ function AppContent() {
         {currentView === 'planner' && <SemesterPlanner />}
         {currentView === 'baskets' && <BasketTracking />}
         {currentView === 'specializations' && <Specializations />}
+        
         {currentView === 'admin' && <AdminPanel />}
-        {/* Step 2 component will render here when we add it */}
+        {currentView === 'upload' && <BulkUpload />}
       </div>
     </div>
   );
