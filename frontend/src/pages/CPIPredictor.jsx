@@ -4,7 +4,7 @@ import axios from 'axios';
 
 export default function CPIPredictor() {
   const { currentUser } = useAuth();
-  const gradePoints = { 'A+': 10, 'A': 10, 'A-': 9, 'B': 8, 'B-': 7, 'C': 6, 'C-': 5, 'D': 4, 'F': 0 };
+  const gradePoints = { 'A+': 11, 'A': 10, 'A-': 9, 'B': 8, 'B-': 7, 'C': 6, 'C-': 5, 'D': 4, 'F': 0 };
   const gradingScale = Object.keys(gradePoints);
 
   const [loading, setLoading] = useState(true);
@@ -46,7 +46,7 @@ export default function CPIPredictor() {
 
   if (loading) return <div className="p-8 text-center text-gray-500 mt-10">Loading prediction engine...</div>;
 
-  // --- MATH CALCULATION ---
+// --- MATH CALCULATION ---
   let basePoints = 0;
   let baseCredits = 0;
   
@@ -54,7 +54,7 @@ export default function CPIPredictor() {
     const credits = Number(r.course?.credits) || 0;
     const points = gradePoints[r.grade];
     
-    // Only add to the calculation if it's a valid letter grade (A-F)
+    // Only add to the calculation if it's a valid letter grade (A-F), skips 'P'
     if (points !== undefined) {
       basePoints += (credits * points);
       baseCredits += credits;
@@ -69,10 +69,13 @@ export default function CPIPredictor() {
   plannedCourses.forEach(r => {
     const credits = Number(r.course?.credits) || 0;
     const predictedGrade = hypotheticalGrades[r.id] || 'A';
-    const points = gradePoints[predictedGrade] || 0;
+    const points = gradePoints[predictedGrade]; // Will be undefined if 'P' is selected
     
-    projectedPoints += (credits * points);
-    projectedCredits += credits;
+    // CRITICAL: Only add credits if it is a standard graded course
+    if (points !== undefined) {
+      projectedPoints += (credits * points);
+      projectedCredits += credits;
+    }
   });
   
   const projectedCPI = projectedCredits > 0 ? (projectedPoints / projectedCredits) : 0;
@@ -129,7 +132,12 @@ export default function CPIPredictor() {
                     value={hypotheticalGrades[record.id] || 'A'}
                     onChange={(e) => handleGradeChange(record.id, e.target.value)}
                   >
-                    {gradingScale.map(grade => <option key={grade} value={grade}>{grade}</option>)}
+                    {/* Render standard A-F grades */}
+                    {gradingScale.map(grade => (
+                      <option key={grade} value={grade}>{grade}</option>
+                    ))}
+                    {/* Render the universal Pass/Fail option */}
+                    <option value="P">P</option>
                   </select>
                 </div>
               </div>
