@@ -44,7 +44,8 @@ export default function Dashboard() {
       setIsEditModalOpen(false);
       fetchDashboardData(); // Refresh the dashboard to instantly update targets and UI
     } catch (error) {
-      alert("Failed to update profile.");
+      console.error("Full error details:", error);
+      alert(`Error: ${error.response?.status} - ${error.response?.data?.error || error.message}`);
     } finally {
       setUpdateLoading(false);
     }
