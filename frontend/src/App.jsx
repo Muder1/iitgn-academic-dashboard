@@ -8,6 +8,7 @@ import BasketTracking from './pages/BasketTracking';
 import Specializations from './pages/Specializations';
 import AdminPanel from './pages/AdminPanel';
 import BulkUpload from './pages/BulkUpload';
+import CPIPredictor from './pages/CPIPredictor';
 
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase'; 
@@ -50,7 +51,8 @@ function AppContent() {
     { id: 'history', label: 'Log Past Courses' },
     { id: 'planner', label: 'Semester Planner' },
     { id: 'baskets', label: 'Basket Audit' },
-    { id: 'specializations', label: 'Specializations' }
+    { id: 'specializations', label: 'Specializations' },
+    { id: 'predictor', label: 'CPI Predictor'}
   ];
 
   const adminTabs = [
@@ -173,6 +175,7 @@ function AppContent() {
         {currentView === 'dashboard' && <Dashboard />}
         {currentView === 'history' && <CourseHistory />}
         {currentView === 'planner' && <SemesterPlanner />}
+        {currentView === 'predictor' && <CPIPredictor />}
         {currentView === 'baskets' && <BasketTracking />}
         {currentView === 'specializations' && <Specializations />}
         

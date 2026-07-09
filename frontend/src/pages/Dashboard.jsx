@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import { auth } from '../firebase';
 import axios from 'axios';
-import CPIPredictor from './CPIPredictor';
 
 export default function Dashboard() {
   const { currentUser, logout } = useAuth();
@@ -68,12 +67,6 @@ export default function Dashboard() {
             <h3 className="text-sm text-gray-500 uppercase tracking-wider mb-2">Courses Logged</h3>
             <p className="text-4xl font-bold text-green-600">{data.stats.coursesTaken}</p>
           </div>
-        </div>
-
-        {/* 2. THE CPI PREDICTOR (Full Width) */}
-        <div className="mb-8">
-          {/* Passed data.records properly! */}
-          <CPIPredictor records={data.records} /> 
         </div>
 
         {/* 3. PROGRESS BAR */}
