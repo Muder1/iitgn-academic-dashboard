@@ -85,4 +85,27 @@ router.get('/', verifyIITGN, async (req, res) => {
   }
 });
 
+// ==========================================
+// PUT /api/dashboard/profile - Update User Branch/Year
+// ==========================================
+router.put('/profile', verifyIITGN, async (req, res) => {
+  try {
+    const { discipline, admissionYear } = req.body;
+    
+    // Update the user in the database
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.uid },
+      data: { 
+        discipline,
+        admissionYear: parseInt(admissionYear)
+      }
+    });
+    
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ error: 'Failed to update profile.' });
+  }
+});
+
 module.exports = router;

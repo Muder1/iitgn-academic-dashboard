@@ -8,6 +8,10 @@ export default function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ discipline: '', admissionYear: '' });
+  const [updateLoading, setUpdateLoading] = useState(false);
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -28,6 +32,32 @@ export default function Dashboard() {
     }
   }, [currentUser]);
 
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    setUpdateLoading(true);
+    try {
+      const token = await currentUser.getIdToken();
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/dashboard/profile`, editForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setIsEditModalOpen(false);
+      fetchDashboardData(); // Refresh the dashboard to instantly update targets and UI
+    } catch (error) {
+      alert("Failed to update profile.");
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  const openEditModal = () => {
+    setEditForm({
+      discipline: data.user.discipline,
+      admissionYear: data.user.admissionYear
+    });
+    setIsEditModalOpen(true);
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center text-xl text-blue-900">Loading your academic profile...</div>;
   if (!data) return <div className="min-h-screen flex items-center justify-center text-red-600">Failed to load data.</div>;
 
@@ -36,12 +66,84 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800">
+
+      {/* NEW: PROFILE EDIT MODAL */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+            <h3 className="text-xl font-bold text-blue-900 mb-4">Edit Academic Profile</h3>
+            <form onSubmit={handleProfileUpdate} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Branch / Discipline</label>
+                <select 
+                  className="w-full p-2 border rounded bg-gray-50"
+                  value={editForm.discipline}
+                  onChange={(e) => setEditForm({...editForm, discipline: e.target.value})}
+                  required
+                >
+                  <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                  <option value="Electrical Engineering">Electrical Engineering</option>
+                  <option value="Mechanical Engineering">Mechanical Engineering</option>
+                  <option value="Civil Engineering">Civil Engineering</option>
+                  <option value="Chemical Engineering">Chemical Engineering</option>
+                  <option value="Materials Engineering">Materials Engineering</option>
+                  <option value="Artificial Intelligence">Artificial Intelligence</option>
+                  <option value="Integrated Circuit Design">Integrated Circuit Design</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Admission Year</label>
+                <input 
+                  type="number" 
+                  min="2010" 
+                  max="2030"
+                  className="w-full p-2 border rounded bg-gray-50"
+                  value={editForm.admissionYear}
+                  onChange={(e) => setEditForm({...editForm, admissionYear: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={updateLoading}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white font-bold rounded hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {updateLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Top Navigation */}
       <nav className="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
         <h1 className="text-xl font-bold text-blue-900">IITGN Academic Dashboard</h1>
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium">{data.user.name} ({data.user.discipline} '{data.user.admissionYear})</span>
-          <button onClick={logout} className="text-sm bg-red-50 text-red-600 px-3 py-1 rounded hover:bg-red-100 transition">Logout</button>
+          {/* UPDATED: Profile info with an Edit Button */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700">
+              {data.user.name} ({data.user.discipline} '{data.user.admissionYear})
+            </span>
+            <button 
+              onClick={openEditModal}
+              className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 border border-blue-200 transition"
+              title="Edit Profile"
+            >
+              Edit
+            </button>
+          </div>
+          <button onClick={logout} className="text-sm bg-red-50 text-red-600 px-3 py-1 rounded hover:bg-red-100 transition border border-red-100">Logout</button>
         </div>
       </nav>
 
