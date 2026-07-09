@@ -12,8 +12,7 @@ export default function Dashboard() {
   const [editForm, setEditForm] = useState({ discipline: '', admissionYear: '' });
   const [updateLoading, setUpdateLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
+  const fetchDashboardData = async () => {
       try {
         const token = await currentUser.getIdToken();
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard`, {
@@ -27,6 +26,8 @@ export default function Dashboard() {
       }
     };
 
+  useEffect(() => {
+    
     if (currentUser) {
       fetchDashboardData();
     }
