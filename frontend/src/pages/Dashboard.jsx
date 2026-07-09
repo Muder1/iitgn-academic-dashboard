@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import { auth } from '../firebase';
 import axios from 'axios';
-import CPIPredictor from '../components/CPIPredictor';
+import CPIPredictor from './CPIPredictor';
 
 export default function Dashboard() {
   const { currentUser, logout } = useAuth();
