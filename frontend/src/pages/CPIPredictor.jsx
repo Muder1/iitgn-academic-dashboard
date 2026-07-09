@@ -49,18 +49,32 @@ export default function CPIPredictor() {
   // --- MATH CALCULATION ---
   let basePoints = 0;
   let baseCredits = 0;
+  
   completedRecords.forEach(r => {
-    basePoints += (r.course?.credits * gradePoints[r.grade]);
-    baseCredits += r.course?.credits;
+    const credits = Number(r.course?.credits) || 0;
+    const points = gradePoints[r.grade];
+    
+    // Only add to the calculation if it's a valid letter grade (A-F)
+    if (points !== undefined) {
+      basePoints += (credits * points);
+      baseCredits += credits;
+    }
   });
+  
   const currentCPI = baseCredits > 0 ? (basePoints / baseCredits) : 0;
 
   let projectedPoints = basePoints;
   let projectedCredits = baseCredits;
+  
   plannedCourses.forEach(r => {
-    projectedPoints += (r.course?.credits * gradePoints[hypotheticalGrades[r.id] || 'A']);
-    projectedCredits += r.course?.credits;
+    const credits = Number(r.course?.credits) || 0;
+    const predictedGrade = hypotheticalGrades[r.id] || 'A';
+    const points = gradePoints[predictedGrade] || 0;
+    
+    projectedPoints += (credits * points);
+    projectedCredits += credits;
   });
+  
   const projectedCPI = projectedCredits > 0 ? (projectedPoints / projectedCredits) : 0;
 
   const cpiDifference = (projectedCPI - currentCPI).toFixed(2);

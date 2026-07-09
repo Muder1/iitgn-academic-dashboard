@@ -50,9 +50,10 @@ function AppContent() {
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'history', label: 'Log Past Courses' },
     { id: 'planner', label: 'Semester Planner' },
+    { id: 'predictor', label: 'CPI Predictor'},
     { id: 'baskets', label: 'Basket Audit' },
-    { id: 'specializations', label: 'Specializations' },
-    { id: 'predictor', label: 'CPI Predictor'}
+    { id: 'specializations', label: 'Specializations' }
+    
   ];
 
   const adminTabs = [
