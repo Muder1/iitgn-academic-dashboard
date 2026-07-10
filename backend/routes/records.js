@@ -71,7 +71,7 @@ router.put('/:id', verifyIITGN, async (req, res) => {
     // Update the specific record in the database
     // Note: If your ID is an integer in Prisma, use parseInt(req.params.id)
     const updatedRecord = await prisma.record.update({
-      where: { id: parseInt(req.params.id) }, 
+      where: { id: req.params.id }, 
       data: { 
         grade,
         isGraded 
