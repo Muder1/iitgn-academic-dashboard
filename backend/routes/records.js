@@ -64,14 +64,15 @@ router.delete('/:id', verifyIITGN, async (req, res) => {
 // ==========================================
 // PUT /api/records/:id - Update a record's grade
 // ==========================================
+// ==========================================
+// PUT /api/records/:id - Update a record's grade
+// ==========================================
 router.put('/:id', verifyIITGN, async (req, res) => {
   try {
     const { grade, isGraded } = req.body;
     
-    // Update the specific record in the database
-    // Note: If your ID is an integer in Prisma, use parseInt(req.params.id)
-    const updatedRecord = await prisma.record.update({
-      where: { id: req.params.id }, 
+    const updatedRecord = await prisma.academicRecord.update({
+      where: { id: parseInt(req.params.id) }, 
       data: { 
         grade,
         isGraded 
@@ -80,9 +81,9 @@ router.put('/:id', verifyIITGN, async (req, res) => {
     
     res.status(200).json(updatedRecord);
   } catch (error) {
-      console.error("Full edit error:", error);
-      alert(`Error: ${error.response?.status} - ${error.response?.data?.error || error.message}`);
-    }
+    console.error("Full edit error:", error);
+    res.status(500).json({ error: 'Failed to update the course grade.' });
+  }
 });
 
 module.exports = router;
