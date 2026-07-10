@@ -9,6 +9,10 @@ export default function CourseHistory() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
   
+  // States for inline editing
+  const [editingRecordId, setEditingRecordId] = useState(null);
+  const [editGrade, setEditGrade] = useState('');
+  
   const [records, setRecords] = useState([]);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +93,28 @@ export default function CourseHistory() {
     } catch (err) { alert("Failed to delete."); }
   };
 
+  const handleSaveEdit = async (recordId) => {
+    try {
+      const token = await currentUser.getIdToken();
+      
+      // Determine if it should be calculated in the CPI based on the new grade
+      const isGraded = (editGrade !== 'Not Graded' && editGrade !== 'P' && editGrade !== 'F');
+
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/records/${recordId}`, {
+        grade: editGrade,
+        isGraded: isGraded
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setEditingRecordId(null); // Close edit mode
+      fetchData(); // Refresh the table and calculations
+    } catch (error) {
+      console.error(error);
+      alert('Failed to update grade.');
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 mt-4 md:mt-10">
       <h2 className="text-3xl font-bold text-blue-900 mb-2">Log Past Courses</h2>
@@ -131,7 +157,9 @@ export default function CourseHistory() {
           <h3 className="font-bold text-lg mb-4 text-gray-700">History by Semester</h3>
           {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => {
             const semRecords = groupedRecords[sem] || [];
+            if (semRecords.length === 0) return null; // Clean up UI by hiding empty semesters
             const isOpen = openSemesters[sem];
+            
             return (
               <div key={sem} className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden transition-all duration-300">
                 <button onClick={() => toggleSemester(sem)} className="w-full flex justify-between items-center p-5 bg-white hover:bg-gray-50 transition-colors font-bold text-gray-800">
@@ -144,18 +172,65 @@ export default function CourseHistory() {
                 <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                   <div className="overflow-hidden">
                     <div className="px-5 pb-5 pt-0 space-y-3">
-                      {semRecords.map(record => (
-                        <div key={record.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-                          <div>
-                            <span className="font-bold text-gray-800 block text-sm">{record.course?.code}</span>
-                            <span className="text-gray-500 text-xs">{record.course?.title}</span>
+                      {semRecords.map(record => {
+                        const isEditing = editingRecordId === record.id;
+                        
+                        return (
+                          <div key={record.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <div>
+                              <span className="font-bold text-gray-800 block text-sm">{record.course?.code}</span>
+                              <span className="text-gray-500 text-xs">{record.course?.title}</span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              {/* EDITING MODE VS VIEWING MODE */}
+                              {isEditing ? (
+                                <>
+                                  <select 
+                                    className="p-1 border border-blue-300 rounded text-sm font-bold text-blue-700 bg-white"
+                                    value={editGrade}
+                                    onChange={(e) => setEditGrade(e.target.value)}
+                                  >
+                                    {gradingScale.map(g => <option key={g} value={g}>{g}</option>)}
+                                  </select>
+                                  <button 
+                                    onClick={() => handleSaveEdit(record.id)}
+                                    className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100 border border-green-200"
+                                  >
+                                    Save
+                                  </button>
+                                  <button 
+                                    onClick={() => setEditingRecordId(null)}
+                                    className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded hover:bg-gray-100 border border-gray-200"
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="font-black text-blue-700 bg-blue-50 px-2 py-1 rounded text-sm">{record.grade}</span>
+                                  <button 
+                                    onClick={() => {
+                                      setEditingRecordId(record.id);
+                                      setEditGrade(record.grade);
+                                    }}
+                                    className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 border border-blue-200 ml-2"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDelete(record.id)} 
+                                    className="text-gray-400 hover:text-red-600 transition-colors ml-1 px-1"
+                                    title="Delete Course"
+                                  >
+                                    ✕
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <span className="font-black text-blue-700 bg-blue-50 px-2 py-1 rounded text-sm">{record.grade}</span>
-                            <button onClick={() => handleDelete(record.id)} className="text-red-400 hover:text-red-600 transition-colors">✕</button>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
