@@ -80,9 +80,9 @@ router.put('/:id', verifyIITGN, async (req, res) => {
     
     res.status(200).json(updatedRecord);
   } catch (error) {
-    console.error("Error updating record:", error);
-    res.status(500).json({ error: 'Failed to update the course grade.' });
-  }
+      console.error("Full edit error:", error);
+      alert(`Error: ${error.response?.status} - ${error.response?.data?.error || error.message}`);
+    }
 });
 
 module.exports = router;
