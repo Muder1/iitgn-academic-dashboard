@@ -9,7 +9,6 @@ export default function Specializations() {
   
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
-  // FIXED: Changed minor (string) to declaredMinors (array)
   const [editForm, setEditForm] = useState({ honors: false, declaredMinors: [] });
 
   const availableMinors = [
@@ -26,7 +25,6 @@ export default function Specializations() {
       });
       setData(res.data);
       
-      // FIXED: Safely load the declaredMinors array from the backend
       setEditForm({ 
         honors: res.data.declarations.honors, 
         declaredMinors: res.data.declarations.declaredMinors || [] 
@@ -44,7 +42,6 @@ export default function Specializations() {
     try {
       const token = await currentUser.getIdToken();
       
-      // FIXED: Sending declaredMinors array to the backend
       await axios.post(`${import.meta.env.VITE_API_URL}/api/specializations/declare`, {
         pursuingHonors: editForm.honors,
         declaredMinors: editForm.declaredMinors
@@ -53,13 +50,12 @@ export default function Specializations() {
       });
       
       setIsEditing(false);
-      fetchSpecializations(); // Refresh to show new titles
+      fetchSpecializations();
     } catch (err) {
       alert("Failed to save your specializations.");
     }
   };
 
-  // Helper to handle checkbox toggles for minors
   const handleMinorToggle = (minorName) => {
     setEditForm(prev => {
       if (prev.declaredMinors.includes(minorName)) {
@@ -74,7 +70,7 @@ export default function Specializations() {
   if (!data) return null;
 
   const renderSpecCard = (title, specData, colorClass, bgColorClass, isDeclared) => {
-    const progress = Math.min(100, (specData.creditsEarned / specData.required) * 100);
+    const progress = Math.min(100, (specData.creditsEarned / specData.required) * 100) || 0;
     
     return (
       <div className={`p-6 rounded-xl shadow-sm border transition-all ${isDeclared ? 'bg-white border-gray-200' : 'bg-gray-50 border-dashed border-gray-300 opacity-70'}`}>
@@ -117,10 +113,6 @@ export default function Specializations() {
                       </span>
                     </div>
                     <p className="text-xs text-gray-500">{record.course?.title}</p>
-                    {/* Visual indicator for which minor this applies to */}
-                    {record.minorTrack && (
-                      <p className="text-[10px] text-purple-600 font-bold mt-1">{record.minorTrack} Minor</p>
-                    )}
                   </div>
                   <span className="text-sm font-bold text-gray-600">{record.course?.credits} Cr</span>
                 </div>
@@ -176,7 +168,7 @@ export default function Specializations() {
               </label>
             </div>
 
-            {/* Minor Selector (Checkboxes for Multiple Minors) */}
+            {/* Minor Checkboxes */}
             <div className="bg-white p-4 rounded shadow-sm border border-blue-50 row-span-2">
               <label className="block font-bold text-gray-800 mb-3">Declared Minors</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -204,8 +196,11 @@ export default function Specializations() {
         </div>
       )}
 
-      {/* Progress Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Progress Cards (Dynamic Grid) */}
+      {/* Changed to lg:grid-cols-3 so if a user has 3 cards (Honors + 2 Minors), they align perfectly */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        
+        {/* Honors is always rendered */}
         {renderSpecCard(
           "Honors Track", 
           data.honors, 
@@ -214,12 +209,52 @@ export default function Specializations() {
           data.declarations.honors
         )}
         
-        {renderSpecCard(
-          hasDeclaredMinors ? `Minor(s): ${data.declarations.declaredMinors.join(', ')}` : "Minor Track", 
-          data.minor, 
-          "text-orange-600", 
-          "bg-orange-100", 
-          hasDeclaredMinors
+        {/* Minors map dynamically, creating an independent box for each one */}
+        {hasDeclaredMinors ? (
+          data.declarations.declaredMinors.map((minorName, index) => {
+            
+            // 1. Filter out courses that belong specifically to this minor
+            const specificMinorCourses = data.minor.courses.filter(c => c.minorTrack === minorName);
+            
+            // 2. Tally up the credits just for this minor
+            const specificMinorCredits = specificMinorCourses.reduce((sum, r) => sum + (r.course?.credits || 0), 0);
+            
+            // 3. Construct the specific data payload for the render function
+            const specificMinorData = {
+              creditsEarned: specificMinorCredits,
+              required: 20, // Strict 20 credit requirement per minor
+              courses: specificMinorCourses
+            };
+
+            // Optional: Alternate colors based on index for visual distinction
+            const colorClasses = [
+              { text: "text-orange-600", bg: "bg-orange-100" },
+              { text: "text-teal-600", bg: "bg-teal-100" },
+              { text: "text-blue-600", bg: "bg-blue-100" }
+            ];
+            const theme = colorClasses[index % colorClasses.length];
+
+            return (
+              <React.Fragment key={minorName}>
+                {renderSpecCard(
+                  `Minor in ${minorName}`, 
+                  specificMinorData, 
+                  theme.text, 
+                  theme.bg, 
+                  true
+                )}
+              </React.Fragment>
+            );
+          })
+        ) : (
+          // Fallback if no minors are declared
+          renderSpecCard(
+            "Minor Track", 
+            { creditsEarned: 0, required: 20, courses: [] }, 
+            "text-orange-600", 
+            "bg-orange-100", 
+            false
+          )
         )}
       </div>
     </div>
