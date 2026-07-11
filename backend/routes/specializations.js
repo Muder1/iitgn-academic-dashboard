@@ -8,10 +8,10 @@ const prisma = new PrismaClient();
 // GET /api/specializations - Fetch progress and user declarations
 router.get('/', verifyIITGN, async (req, res) => {
   try {
-    // Fetch the user's declared specializations
+    // FIXED: Changed pursuingMinor to declaredMinors to match the new schema
     const user = await prisma.user.findUnique({
       where: { id: req.user.uid },
-      select: { pursuingHonors: true, pursuingMinor: true }
+      select: { pursuingHonors: true, declaredMinors: true } 
     });
 
     // Fetch the records
@@ -32,7 +32,8 @@ router.get('/', verifyIITGN, async (req, res) => {
     res.json({
       declarations: {
         honors: user?.pursuingHonors || false,
-        minor: user?.pursuingMinor || null
+        // NEW: Return the array of minors, fallback to an empty array
+        declaredMinors: user?.declaredMinors || []
       },
       honors: {
         creditsEarned: sumCredits(honorsRecords),
@@ -54,14 +55,14 @@ router.get('/', verifyIITGN, async (req, res) => {
 // POST /api/specializations/declare - Update declarations
 router.post('/declare', verifyIITGN, async (req, res) => {
   try {
-    const { pursuingHonors, pursuingMinor } = req.body;
+    // FIXED: Now expecting an array named 'declaredMinors' instead of 'pursuingMinor'
+    const { pursuingHonors, declaredMinors } = req.body;
     
     await prisma.user.update({
       where: { id: req.user.uid },
       data: { 
         pursuingHonors, 
-        // If empty string passed, convert to null for the database
-        pursuingMinor: pursuingMinor === '' ? null : pursuingMinor 
+        declaredMinors: declaredMinors || [] // Save the array to DB
       }
     });
     

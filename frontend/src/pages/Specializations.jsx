@@ -9,7 +9,8 @@ export default function Specializations() {
   
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ honors: false, minor: '' });
+  // FIXED: Changed minor (string) to declaredMinors (array)
+  const [editForm, setEditForm] = useState({ honors: false, declaredMinors: [] });
 
   const availableMinors = [
     "Artificial Intelligence", "Computer Science", "Management", 
@@ -24,9 +25,11 @@ export default function Specializations() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setData(res.data);
+      
+      // FIXED: Safely load the declaredMinors array from the backend
       setEditForm({ 
         honors: res.data.declarations.honors, 
-        minor: res.data.declarations.minor || '' 
+        declaredMinors: res.data.declarations.declaredMinors || [] 
       });
     } catch (err) {
       console.error("Error fetching specializations", err);
@@ -40,17 +43,31 @@ export default function Specializations() {
   const handleSaveDeclarations = async () => {
     try {
       const token = await currentUser.getIdToken();
+      
+      // FIXED: Sending declaredMinors array to the backend
       await axios.post(`${import.meta.env.VITE_API_URL}/api/specializations/declare`, {
         pursuingHonors: editForm.honors,
-        pursuingMinor: editForm.minor
+        declaredMinors: editForm.declaredMinors
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
       setIsEditing(false);
       fetchSpecializations(); // Refresh to show new titles
     } catch (err) {
       alert("Failed to save your specializations.");
     }
+  };
+
+  // Helper to handle checkbox toggles for minors
+  const handleMinorToggle = (minorName) => {
+    setEditForm(prev => {
+      if (prev.declaredMinors.includes(minorName)) {
+        return { ...prev, declaredMinors: prev.declaredMinors.filter(m => m !== minorName) };
+      } else {
+        return { ...prev, declaredMinors: [...prev.declaredMinors, minorName] };
+      }
+    });
   };
 
   if (loading) return <div className="p-8 text-center text-gray-500 mt-10">Loading your specializations...</div>;
@@ -100,6 +117,10 @@ export default function Specializations() {
                       </span>
                     </div>
                     <p className="text-xs text-gray-500">{record.course?.title}</p>
+                    {/* Visual indicator for which minor this applies to */}
+                    {record.minorTrack && (
+                      <p className="text-[10px] text-purple-600 font-bold mt-1">{record.minorTrack} Minor</p>
+                    )}
                   </div>
                   <span className="text-sm font-bold text-gray-600">{record.course?.credits} Cr</span>
                 </div>
@@ -110,6 +131,8 @@ export default function Specializations() {
       </div>
     );
   };
+
+  const hasDeclaredMinors = data.declarations.declaredMinors && data.declarations.declaredMinors.length > 0;
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 mt-4 md:mt-6">
@@ -133,6 +156,7 @@ export default function Specializations() {
       {isEditing && (
         <div className="bg-blue-50 border border-blue-100 p-6 rounded-xl mb-8 shadow-sm">
           <h3 className="font-bold text-blue-900 mb-4 text-lg">Update Your Declarations</h3>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Honors Toggle */}
@@ -152,17 +176,22 @@ export default function Specializations() {
               </label>
             </div>
 
-            {/* Minor Selector */}
-            <div className="bg-white p-4 rounded shadow-sm border border-blue-50">
-              <label className="block font-bold text-gray-800 mb-1">Declared Minor</label>
-              <select 
-                className="w-full p-2 border rounded bg-gray-50 text-sm"
-                value={editForm.minor}
-                onChange={(e) => setEditForm({...editForm, minor: e.target.value})}
-              >
-                <option value="">None (Not pursuing a minor)</option>
-                {availableMinors.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
+            {/* Minor Selector (Checkboxes for Multiple Minors) */}
+            <div className="bg-white p-4 rounded shadow-sm border border-blue-50 row-span-2">
+              <label className="block font-bold text-gray-800 mb-3">Declared Minors</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {availableMinors.map(m => (
+                  <label key={m} className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 hover:text-blue-700 transition-colors">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      checked={editForm.declaredMinors.includes(m)}
+                      onChange={() => handleMinorToggle(m)}
+                    />
+                    {m}
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
           
@@ -186,11 +215,11 @@ export default function Specializations() {
         )}
         
         {renderSpecCard(
-          data.declarations.minor ? `Minor in ${data.declarations.minor}` : "Minor Track", 
+          hasDeclaredMinors ? `Minor(s): ${data.declarations.declaredMinors.join(', ')}` : "Minor Track", 
           data.minor, 
           "text-orange-600", 
           "bg-orange-100", 
-          !!data.declarations.minor
+          hasDeclaredMinors
         )}
       </div>
     </div>
