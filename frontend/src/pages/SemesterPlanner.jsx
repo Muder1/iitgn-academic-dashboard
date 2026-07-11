@@ -6,34 +6,42 @@ export default function SemesterPlanner() {
   const { currentUser } = useAuth();
   const [courses, setCourses] = useState([]);
   const [plannedRecords, setPlannedRecords] = useState([]);
-  const [formData, setFormData] = useState({ courseId: '', semester: '2', isHonors: false, isMinor: false });
   
-  // Fetch courses and current planned records
+  // Track declarations for conditional rendering
+  const [honorsDeclared, setHonorsDeclared] = useState(false);
+  const [declaredMinors, setDeclaredMinors] = useState([]);
+  
+  // Updated formData to use minorTrack instead of a boolean isMinor
+  const [formData, setFormData] = useState({ courseId: '', semester: '2', isHonors: false, minorTrack: '' });
+  
+  // Fetch courses, planned records, and declarations
   const fetchData = async () => {
     try {
       const token = await currentUser.getIdToken();
       
-      // Get course catalog
-      const courseRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/records/courses`);
-      // Sort alphabetically for easy finding in the dropdown
+      // Fetch all required data concurrently
+      const [courseRes, dashboardRes, specRes] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_API_URL}/api/records/courses`),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/specializations`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      
+      // 1. Sort & Set Courses
       const sortedCourses = courseRes.data.sort((a, b) => a.code.localeCompare(b.code));
       setCourses(sortedCourses);
-      
       if (sortedCourses.length > 0 && !formData.courseId) {
         setFormData(prev => ({ ...prev, courseId: sortedCourses[0].id }));
       }
 
-      // Get user's planned records
-      const dashboardRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      // Filter out only the planned ones, and sort them by semester
+      // 2. Set Planned Records
       const planned = dashboardRes.data.records
         .filter(r => r.status === 'PLANNED')
         .sort((a, b) => a.semester - b.semester);
-        
       setPlannedRecords(planned);
+
+      // 3. Set Declarations (controls UI visibility)
+      setHonorsDeclared(specRes.data.declarations.honors || false);
+      setDeclaredMinors(specRes.data.declarations.declaredMinors || []);
       
     } catch (error) {
       console.error("Error fetching planner data:", error);
@@ -48,12 +56,17 @@ export default function SemesterPlanner() {
       const token = await currentUser.getIdToken();
       await axios.post(`${import.meta.env.VITE_API_URL}/api/records`, {
         ...formData,
-        status: 'PLANNED', // Flag this as a future course
-        isGraded: true // Assume graded for planner purposes unless changed later
+        isMinor: formData.minorTrack !== '',
+        minorTrack: formData.minorTrack === '' ? null : formData.minorTrack,
+        status: 'PLANNED', 
+        isGraded: true 
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchData(); // Refresh the list
+      
+      // Reset the toggles after adding, but keep the selected semester
+      setFormData(prev => ({ ...prev, isHonors: false, minorTrack: '' }));
+      fetchData(); 
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to add course');
     }
@@ -67,7 +80,7 @@ export default function SemesterPlanner() {
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/records/${recordId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchData(); // Refresh the list
+      fetchData(); 
     } catch (error) {
       alert('Failed to delete course');
     }
@@ -117,28 +130,39 @@ export default function SemesterPlanner() {
               </select>
             </div>
 
-            {/* Honors & Minors Checkboxes */}
-            <div className="flex flex-col gap-3 pt-4 border-t mt-4">
-              <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={formData.isHonors}
-                  onChange={(e) => setFormData({...formData, isHonors: e.target.checked, isMinor: false})}
-                  className="rounded text-blue-600 w-4 h-4"
-                />
-                <span className="font-medium">Count towards Honors</span>
-              </label>
-              
-              <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={formData.isMinor}
-                  onChange={(e) => setFormData({...formData, isMinor: e.target.checked, isHonors: false})}
-                  className="rounded text-orange-600 w-4 h-4"
-                />
-                <span className="font-medium">Count towards Minor</span>
-              </label>
-            </div>
+            {/* CONDITIONAL RENDER: Honors & Minors */}
+            {(honorsDeclared || declaredMinors.length > 0) && (
+              <div className="flex flex-col gap-3 pt-4 border-t mt-4">
+                
+                {/* Only show if Honors is declared */}
+                {honorsDeclared && (
+                  <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={formData.isHonors}
+                      onChange={(e) => setFormData({...formData, isHonors: e.target.checked, minorTrack: ''})}
+                      className="rounded text-blue-600 w-4 h-4"
+                    />
+                    <span className="font-medium">Count towards Honors</span>
+                  </label>
+                )}
+                
+                {/* Only show if at least one Minor is declared */}
+                {declaredMinors.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 mt-1">Declare for Minor</label>
+                    <select 
+                      className="w-full p-2 border border-orange-200 rounded bg-orange-50 text-orange-800 text-sm"
+                      value={formData.minorTrack}
+                      onChange={(e) => setFormData({...formData, minorTrack: e.target.value, isHonors: false})}
+                    >
+                      <option value="">Not for Minor</option>
+                      {declaredMinors.map(m => <option key={m} value={m}>{m} Minor</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
             
             <button type="submit" className="w-full bg-orange-500 text-white font-bold py-2 px-4 rounded hover:bg-orange-600 transition mt-2">
               Add to Plan
@@ -170,13 +194,13 @@ export default function SemesterPlanner() {
                       </span>
                       <span className="font-bold text-gray-800">{record.course?.code}</span>
                       
-                      {/* Added visual tags for Basket, Honors, and Minors */}
                       <span className="text-[10px] uppercase font-bold text-gray-500 border px-1 rounded">
                         {record.course?.basket?.name || 'Uncategorized'}
                       </span>
                       
                       {record.isHonors && <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-1.5 py-0.5 rounded">HONORS</span>}
-                      {record.isMinor && <span className="bg-orange-100 text-orange-700 text-[10px] font-bold px-1.5 py-0.5 rounded">MINOR</span>}
+                      {/* DYNAMIC MINOR BADGE */}
+                      {record.minorTrack && <span className="bg-orange-100 text-orange-700 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase">{record.minorTrack} MINOR</span>}
                     </div>
                     <div className="text-sm text-gray-600">
                       {record.course?.title}
