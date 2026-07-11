@@ -5,7 +5,6 @@ import axios from 'axios';
 export default function CourseHistory() {
   const { currentUser } = useAuth();
   
-  // Added minorTrack to initial form state
   const [formData, setFormData] = useState({ courseId: '', semester: '1', grade: 'A', minorTrack: '' });
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
@@ -37,10 +36,8 @@ export default function CourseHistory() {
       const sortedCourses = courseRes.data.sort((a, b) => a.code.localeCompare(b.code));
       setCourses(sortedCourses);
       
-      // Grab user's minors from DB, fallback to defaults if empty/undefined
-      setDeclaredMinors(res.data.user?.declaredMinors?.length > 0 
-        ? res.data.user.declaredMinors 
-        : ['Computer Science', 'Management', 'Physics']);
+      // STRICT CHECK: Only load minors actually declared by the user, no fallbacks
+      setDeclaredMinors(res.data.user?.declaredMinors || []);
       
       if (sortedCourses.length > 0 && !formData.courseId) {
         setFormData(prev => ({ ...prev, courseId: sortedCourses[0].id }));
@@ -162,13 +159,16 @@ export default function CourseHistory() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Declare for Minor (Optional)</label>
-              <select className="w-full p-2 border border-purple-200 rounded bg-purple-50 text-purple-800" value={formData.minorTrack} onChange={(e) => setFormData({...formData, minorTrack: e.target.value})}>
-                <option value="">Not for Minor</option>
-                {declaredMinors.map(m => <option key={m} value={m}>{m} Minor</option>)}
-              </select>
-            </div>
+            {/* CONDITIONAL RENDER: Only show if user has declared at least 1 minor */}
+            {declaredMinors.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Declare for Minor (Optional)</label>
+                <select className="w-full p-2 border border-purple-200 rounded bg-purple-50 text-purple-800" value={formData.minorTrack} onChange={(e) => setFormData({...formData, minorTrack: e.target.value})}>
+                  <option value="">Not for Minor</option>
+                  {declaredMinors.map(m => <option key={m} value={m}>{m} Minor</option>)}
+                </select>
+              </div>
+            )}
 
             <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded mt-4 hover:bg-blue-700 transition">Log Course</button>
           </form>
@@ -222,14 +222,17 @@ export default function CourseHistory() {
                                     {gradingScale.map(g => <option key={g} value={g}>{g}</option>)}
                                   </select>
                                   
-                                  <select 
-                                    className="p-1 border border-purple-300 rounded text-sm font-bold text-purple-700 bg-purple-50"
-                                    value={editMinorTrack}
-                                    onChange={(e) => setEditMinorTrack(e.target.value)}
-                                  >
-                                    <option value="">No Minor</option>
-                                    {declaredMinors.map(m => <option key={m} value={m}>{m} Minor</option>)}
-                                  </select>
+                                  {/* CONDITIONAL RENDER: Only show Minor edit if user has declared minors */}
+                                  {declaredMinors.length > 0 && (
+                                    <select 
+                                      className="p-1 border border-purple-300 rounded text-sm font-bold text-purple-700 bg-purple-50"
+                                      value={editMinorTrack}
+                                      onChange={(e) => setEditMinorTrack(e.target.value)}
+                                    >
+                                      <option value="">No Minor</option>
+                                      {declaredMinors.map(m => <option key={m} value={m}>{m} Minor</option>)}
+                                    </select>
+                                  )}
 
                                   <button onClick={() => handleSaveEdit(record.id)} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100 border border-green-200">Save</button>
                                   <button onClick={() => setEditingRecordId(null)} className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded hover:bg-gray-100 border border-gray-200">Cancel</button>
