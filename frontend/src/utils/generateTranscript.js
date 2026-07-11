@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 export const generateTranscript = (userData, records) => {
   // 1. Initialize a standard A4 portrait document
@@ -70,7 +70,7 @@ export const generateTranscript = (userData, records) => {
     ]);
 
     // Draw the Table
-    doc.autoTable({
+    autoTable(doc, {
       startY: currentY,
       head: [['Code', 'Course Title', 'Credits', 'Grade']],
       body: tableData,
@@ -78,10 +78,10 @@ export const generateTranscript = (userData, records) => {
       headStyles: { fillColor: [30, 58, 138], textColor: 255 },
       styles: { fontSize: 10, cellPadding: 3 },
       columnStyles: {
-        0: { cellWidth: 30, fontStyle: 'bold' }, // Code
-        1: { cellWidth: 110 }, // Title
-        2: { cellWidth: 20, halign: 'center' }, // Credits
-        3: { cellWidth: 20, halign: 'center', fontStyle: 'bold' } // Grade
+        0: { cellWidth: 30, fontStyle: 'bold' }, 
+        1: { cellWidth: 110 }, 
+        2: { cellWidth: 20, halign: 'center' }, 
+        3: { cellWidth: 20, halign: 'center', fontStyle: 'bold' } 
       }
     });
 
