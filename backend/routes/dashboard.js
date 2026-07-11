@@ -67,14 +67,15 @@ router.get('/', verifyIITGN, async (req, res) => {
         name: user.name,
         email: user.email,
         admissionYear: user.admissionYear,
-        discipline: user.discipline
+        discipline: user.discipline,
+        declaredMinors: user.declaredMinors || [] // RETAINED: Required for the frontend Minor dropdown
       },
       stats: {
         completedCredits,
         plannedCredits,
         targetCredits,
         coursesTaken: completedRecords.length,
-        cgpa: currentCGPA // Sending the CGPA to the frontend!
+        cgpa: currentCGPA
       },
       records: user.records
     });

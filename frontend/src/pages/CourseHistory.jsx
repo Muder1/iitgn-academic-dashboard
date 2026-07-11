@@ -5,16 +5,19 @@ import axios from 'axios';
 export default function CourseHistory() {
   const { currentUser } = useAuth();
   
-  const [formData, setFormData] = useState({ courseId: '', semester: '1', grade: 'A' });
+  // Added minorTrack to initial form state
+  const [formData, setFormData] = useState({ courseId: '', semester: '1', grade: 'A', minorTrack: '' });
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
   
   // States for inline editing
   const [editingRecordId, setEditingRecordId] = useState(null);
   const [editGrade, setEditGrade] = useState('');
+  const [editMinorTrack, setEditMinorTrack] = useState('');
   
   const [records, setRecords] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [declaredMinors, setDeclaredMinors] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [openSemesters, setOpenSemesters] = useState({});
 
@@ -24,7 +27,6 @@ export default function CourseHistory() {
     try {
       const token = await currentUser.getIdToken();
       
-      // Fetch Master Catalog & User Records
       const [courseRes, res] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/api/records/courses`),
         axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard`, {
@@ -34,6 +36,11 @@ export default function CourseHistory() {
       
       const sortedCourses = courseRes.data.sort((a, b) => a.code.localeCompare(b.code));
       setCourses(sortedCourses);
+      
+      // Grab user's minors from DB, fallback to defaults if empty/undefined
+      setDeclaredMinors(res.data.user?.declaredMinors?.length > 0 
+        ? res.data.user.declaredMinors 
+        : ['Computer Science', 'Management', 'Physics']);
       
       if (sortedCourses.length > 0 && !formData.courseId) {
         setFormData(prev => ({ ...prev, courseId: sortedCourses[0].id }));
@@ -71,11 +78,15 @@ export default function CourseHistory() {
       await axios.post(`${import.meta.env.VITE_API_URL}/api/records`, {
         ...formData,
         isGraded,
+        isMinor: formData.minorTrack !== '',
+        minorTrack: formData.minorTrack === '' ? null : formData.minorTrack,
         status: 'COMPLETED'
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage("Successfully logged course!");
+      
+      setFormData(prev => ({ ...prev, minorTrack: '' })); // Reset minor field
       fetchData(); 
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add course.');
@@ -96,22 +107,22 @@ export default function CourseHistory() {
   const handleSaveEdit = async (recordId) => {
     try {
       const token = await currentUser.getIdToken();
-      
-      // Determine if it should be calculated in the CPI based on the new grade
       const isGraded = (editGrade !== 'Not Graded' && editGrade !== 'P' && editGrade !== 'F');
 
       await axios.put(`${import.meta.env.VITE_API_URL}/api/records/${recordId}`, {
         grade: editGrade,
-        isGraded: isGraded
+        isGraded: isGraded,
+        isMinor: editMinorTrack !== '',
+        minorTrack: editMinorTrack === '' ? null : editMinorTrack
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      setEditingRecordId(null); // Close edit mode
-      fetchData(); // Refresh the table and calculations
+      setEditingRecordId(null); 
+      fetchData(); 
     } catch (error) {
       console.error(error);
-      alert('Failed to update grade.');
+      alert('Failed to update record.');
     }
   };
 
@@ -124,6 +135,7 @@ export default function CourseHistory() {
       {error && <div className="bg-red-100 text-red-700 p-4 rounded mb-6 font-medium">{error}</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
         {/* ADD ENTRY FORM */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
           <h3 className="font-bold text-lg mb-4 border-b pb-2">Add Entry</h3>
@@ -134,6 +146,7 @@ export default function CourseHistory() {
                 {courses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.title}</option>)}
               </select>
             </div>
+            
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
@@ -148,6 +161,15 @@ export default function CourseHistory() {
                 </select>
               </div>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Declare for Minor (Optional)</label>
+              <select className="w-full p-2 border border-purple-200 rounded bg-purple-50 text-purple-800" value={formData.minorTrack} onChange={(e) => setFormData({...formData, minorTrack: e.target.value})}>
+                <option value="">Not for Minor</option>
+                {declaredMinors.map(m => <option key={m} value={m}>{m} Minor</option>)}
+              </select>
+            </div>
+
             <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded mt-4 hover:bg-blue-700 transition">Log Course</button>
           </form>
         </div>
@@ -157,7 +179,7 @@ export default function CourseHistory() {
           <h3 className="font-bold text-lg mb-4 text-gray-700">History by Semester</h3>
           {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => {
             const semRecords = groupedRecords[sem] || [];
-            if (semRecords.length === 0) return null; // Clean up UI by hiding empty semesters
+            if (semRecords.length === 0) return null; 
             const isOpen = openSemesters[sem];
             
             return (
@@ -178,12 +200,18 @@ export default function CourseHistory() {
                         return (
                           <div key={record.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
                             <div>
-                              <span className="font-bold text-gray-800 block text-sm">{record.course?.code}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-gray-800 block text-sm">{record.course?.code}</span>
+                                {record.minorTrack && !isEditing && (
+                                  <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full border border-purple-200">
+                                    {record.minorTrack} Minor
+                                  </span>
+                                )}
+                              </div>
                               <span className="text-gray-500 text-xs">{record.course?.title}</span>
                             </div>
                             
                             <div className="flex items-center gap-2">
-                              {/* EDITING MODE VS VIEWING MODE */}
                               {isEditing ? (
                                 <>
                                   <select 
@@ -193,18 +221,18 @@ export default function CourseHistory() {
                                   >
                                     {gradingScale.map(g => <option key={g} value={g}>{g}</option>)}
                                   </select>
-                                  <button 
-                                    onClick={() => handleSaveEdit(record.id)}
-                                    className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100 border border-green-200"
+                                  
+                                  <select 
+                                    className="p-1 border border-purple-300 rounded text-sm font-bold text-purple-700 bg-purple-50"
+                                    value={editMinorTrack}
+                                    onChange={(e) => setEditMinorTrack(e.target.value)}
                                   >
-                                    Save
-                                  </button>
-                                  <button 
-                                    onClick={() => setEditingRecordId(null)}
-                                    className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded hover:bg-gray-100 border border-gray-200"
-                                  >
-                                    Cancel
-                                  </button>
+                                    <option value="">No Minor</option>
+                                    {declaredMinors.map(m => <option key={m} value={m}>{m} Minor</option>)}
+                                  </select>
+
+                                  <button onClick={() => handleSaveEdit(record.id)} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100 border border-green-200">Save</button>
+                                  <button onClick={() => setEditingRecordId(null)} className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded hover:bg-gray-100 border border-gray-200">Cancel</button>
                                 </>
                               ) : (
                                 <>
@@ -213,18 +241,13 @@ export default function CourseHistory() {
                                     onClick={() => {
                                       setEditingRecordId(record.id);
                                       setEditGrade(record.grade);
+                                      setEditMinorTrack(record.minorTrack || '');
                                     }}
                                     className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 border border-blue-200 ml-2"
                                   >
                                     Edit
                                   </button>
-                                  <button 
-                                    onClick={() => handleDelete(record.id)} 
-                                    className="text-gray-400 hover:text-red-600 transition-colors ml-1 px-1"
-                                    title="Delete Course"
-                                  >
-                                    ✕
-                                  </button>
+                                  <button onClick={() => handleDelete(record.id)} className="text-gray-400 hover:text-red-600 transition-colors ml-1 px-1" title="Delete Course">✕</button>
                                 </>
                               )}
                             </div>

@@ -25,7 +25,8 @@ router.get('/courses', async (req, res) => {
 // POST /api/records
 router.post('/', verifyIITGN, async (req, res) => {
   try {
-    const { courseId, semester, grade, status, isHonors, isMinor } = req.body;
+    // NEW: Extracted minorTrack from the incoming request body
+    const { courseId, semester, grade, status, isHonors, isMinor, minorTrack } = req.body;
 
     const newRecord = await prisma.academicRecord.create({
       data: {
@@ -34,8 +35,9 @@ router.post('/', verifyIITGN, async (req, res) => {
         semester: parseInt(semester),
         grade: grade || null,
         status: status || 'COMPLETED',
-        isHonors: isHonors || false,
-        isMinor: isMinor || false
+        isHonors: isHonors || false,     // Ensuring honors is passed properly
+        isMinor: isMinor || false,
+        minorTrack: minorTrack || null   // Saving the specific minor name (e.g., "Computer Science")
       }
     });
 
@@ -62,25 +64,28 @@ router.delete('/:id', verifyIITGN, async (req, res) => {
 });
 
 // ==========================================
-// PUT /api/records/:id - Update a record's grade
+// PUT /api/records/:id - Update a record
 // ==========================================
-
 router.put('/:id', verifyIITGN, async (req, res) => {
   try {
-    const { grade, isGraded } = req.body;
+    // NEW: Extracting all tags from the request body
+    const { grade, isGraded, isHonors, isMinor, minorTrack } = req.body;
     
     const updatedRecord = await prisma.academicRecord.update({
       where: { id: parseInt(req.params.id) }, 
       data: { 
         grade,
-        isGraded 
+        isGraded,
+        isHonors,      // Ensuring honors status can be toggled in edits
+        isMinor,       // Boolean flag for if it counts towards a minor
+        minorTrack     // String denoting which specific minor it counts towards
       }
     });
     
     res.status(200).json(updatedRecord);
   } catch (error) {
     console.error("Full edit error:", error);
-    res.status(500).json({ error: 'Failed to update the course grade.' });
+    res.status(500).json({ error: 'Failed to update the course record.' });
   }
 });
 

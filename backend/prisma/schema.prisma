@@ -15,7 +15,7 @@ model User {
   admissionYear Int
   discipline    String
   pursuingHonors Boolean  @default(false)
-  pursuingMinor  String?  // Nullable, e.g., "Artificial Intelligence", "Management"
+  declaredMinors String[] @default([]) // e.g., ["Management", "Computer Science"]
   createdAt     DateTime         @default(now())
   records       AcademicRecord[]
   isAdmin       Boolean          @default(false)
@@ -65,6 +65,7 @@ model AcademicRecord {
   status    String  // "COMPLETED" or "PLANNED"
   isHonors  Boolean @default(false)
   isMinor   Boolean @default(false)
+  minorTrack   String?  // 
   isGraded  Boolean @default(true)
   user      User    @relation(fields: [userId], references: [id])
   course    Course  @relation(fields: [courseId], references: [id])
