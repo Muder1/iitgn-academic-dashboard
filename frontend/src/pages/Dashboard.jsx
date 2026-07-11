@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import { auth } from '../firebase';
 import axios from 'axios';
+import { generateTranscript } from '../utils/generateTranscript';
 
 export default function Dashboard() {
   const { currentUser, logout } = useAuth();
@@ -133,16 +134,28 @@ export default function Dashboard() {
         <h1 className="text-xl font-bold text-blue-900">IITGN Academic Dashboard</h1>
         <div className="flex items-center gap-4">
           {/* UPDATED: Profile info with an Edit Button */}
-          <div className="flex items-center gap-2">
+          {/* Profile info with Edit & Export Buttons */}
+          <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-gray-700">
               {data.user.name} ({data.user.discipline} '{data.user.admissionYear})
             </span>
+
             <button 
               onClick={openEditModal}
               className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 border border-blue-200 transition"
               title="Edit Profile"
             >
               Edit
+            </button>
+
+            {/* NEW: Export PDF Button */}
+            <button 
+              onClick={() => generateTranscript(data.user, data.records)}
+              className="text-xs font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded hover:bg-gray-200 border border-gray-300 transition flex items-center gap-1"
+              title="Download Unofficial Transcript"
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Export PDF
             </button>
           </div>
           <button onClick={logout} className="text-sm bg-red-50 text-red-600 px-3 py-1 rounded hover:bg-red-100 transition border border-red-100">Logout</button>

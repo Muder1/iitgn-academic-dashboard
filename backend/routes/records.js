@@ -64,9 +64,7 @@ router.delete('/:id', verifyIITGN, async (req, res) => {
 // ==========================================
 // PUT /api/records/:id - Update a record's grade
 // ==========================================
-// ==========================================
-// PUT /api/records/:id - Update a record's grade
-// ==========================================
+
 router.put('/:id', verifyIITGN, async (req, res) => {
   try {
     const { grade, isGraded } = req.body;
