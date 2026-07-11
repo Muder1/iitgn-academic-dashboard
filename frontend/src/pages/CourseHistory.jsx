@@ -5,18 +5,21 @@ import axios from 'axios';
 export default function CourseHistory() {
   const { currentUser } = useAuth();
   
-  const [formData, setFormData] = useState({ courseId: '', semester: '1', grade: 'A', minorTrack: '' });
+  const [formData, setFormData] = useState({ courseId: '', semester: '1', grade: 'A', minorTrack: '', isHonors: false });
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
   
-  // States for inline editing
-  const [editingRecordId, setEditingRecordId] = useState(null);
-  const [editGrade, setEditGrade] = useState('');
-  const [editMinorTrack, setEditMinorTrack] = useState('');
+  // States for Dialog Box (Modal) Editing
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ id: null, code: '', title: '', grade: 'A', isHonors: false, minorTrack: '' });
   
   const [records, setRecords] = useState([]);
   const [courses, setCourses] = useState([]);
+  
+  // Declaration tracking
   const [declaredMinors, setDeclaredMinors] = useState([]); 
+  const [honorsDeclared, setHonorsDeclared] = useState(false);
+  
   const [loading, setLoading] = useState(true);
   const [openSemesters, setOpenSemesters] = useState({});
 
@@ -26,9 +29,12 @@ export default function CourseHistory() {
     try {
       const token = await currentUser.getIdToken();
       
-      const [courseRes, res] = await Promise.all([
+      const [courseRes, dashboardRes, specRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/api/records/courses`),
         axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/specializations`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -36,14 +42,14 @@ export default function CourseHistory() {
       const sortedCourses = courseRes.data.sort((a, b) => a.code.localeCompare(b.code));
       setCourses(sortedCourses);
       
-      // STRICT CHECK: Only load minors actually declared by the user, no fallbacks
-      setDeclaredMinors(res.data.user?.declaredMinors || []);
+      setDeclaredMinors(specRes.data.declarations.declaredMinors || []);
+      setHonorsDeclared(specRes.data.declarations.honors || false);
       
       if (sortedCourses.length > 0 && !formData.courseId) {
         setFormData(prev => ({ ...prev, courseId: sortedCourses[0].id }));
       }
       
-      setRecords(res.data.records.filter(r => r.status === 'COMPLETED'));
+      setRecords(dashboardRes.data.records.filter(r => r.status === 'COMPLETED'));
     } catch (err) {
       console.error("Error fetching data", err);
     } finally {
@@ -77,13 +83,14 @@ export default function CourseHistory() {
         isGraded,
         isMinor: formData.minorTrack !== '',
         minorTrack: formData.minorTrack === '' ? null : formData.minorTrack,
+        isHonors: formData.isHonors,
         status: 'COMPLETED'
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage("Successfully logged course!");
       
-      setFormData(prev => ({ ...prev, minorTrack: '' })); // Reset minor field
+      setFormData(prev => ({ ...prev, minorTrack: '', isHonors: false })); 
       fetchData(); 
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add course.');
@@ -101,21 +108,37 @@ export default function CourseHistory() {
     } catch (err) { alert("Failed to delete."); }
   };
 
-  const handleSaveEdit = async (recordId) => {
+  // Open the Modal and populate data
+  const handleEditClick = (record) => {
+    setEditForm({
+      id: record.id,
+      code: record.course?.code,
+      title: record.course?.title,
+      grade: record.grade,
+      isHonors: record.isHonors || false,
+      minorTrack: record.minorTrack || ''
+    });
+    setIsEditModalOpen(true);
+  };
+
+  // Submit edits from the Modal
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
     try {
       const token = await currentUser.getIdToken();
-      const isGraded = (editGrade !== 'Not Graded' && editGrade !== 'P' && editGrade !== 'F');
+      const isGraded = (editForm.grade !== 'Not Graded' && editForm.grade !== 'P' && editForm.grade !== 'F');
 
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/records/${recordId}`, {
-        grade: editGrade,
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/records/${editForm.id}`, {
+        grade: editForm.grade,
         isGraded: isGraded,
-        isMinor: editMinorTrack !== '',
-        minorTrack: editMinorTrack === '' ? null : editMinorTrack
+        isMinor: editForm.minorTrack !== '',
+        minorTrack: editForm.minorTrack === '' ? null : editForm.minorTrack,
+        isHonors: editForm.isHonors
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      setEditingRecordId(null); 
+      setIsEditModalOpen(false); 
       fetchData(); 
     } catch (error) {
       console.error(error);
@@ -124,7 +147,79 @@ export default function CourseHistory() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-8 mt-4 md:mt-10">
+    <div className="max-w-4xl mx-auto p-4 md:p-8 mt-4 md:mt-10 relative">
+      
+      {/* DIALOG BOX (MODAL) FOR EDITING */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+            <h3 className="text-xl font-bold text-blue-900 mb-1">Edit Course</h3>
+            <p className="text-sm font-bold text-gray-700 mb-4">{editForm.code} - <span className="font-normal">{editForm.title}</span></p>
+            
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Grade</label>
+                <select 
+                  className="w-full p-2 border rounded bg-gray-50 font-bold text-blue-700"
+                  value={editForm.grade}
+                  onChange={(e) => setEditForm({...editForm, grade: e.target.value})}
+                >
+                  {gradingScale.map(g => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </div>
+
+              {/* Modal Declarations (Honors/Minors) */}
+              {(honorsDeclared || declaredMinors.length > 0) && (
+                <div className="flex flex-col gap-3 pt-3 border-t mt-3">
+                  
+                  {honorsDeclared && (
+                    <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={editForm.isHonors}
+                        onChange={(e) => setEditForm({...editForm, isHonors: e.target.checked, minorTrack: e.target.checked ? '' : editForm.minorTrack})}
+                        className="rounded text-blue-600 w-4 h-4"
+                      />
+                      <span className="font-medium">Count towards Honors</span>
+                    </label>
+                  )}
+
+                  {declaredMinors.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1 mt-1">Declare for Minor</label>
+                      <select 
+                        className="w-full p-2 border border-purple-200 rounded bg-purple-50 text-purple-800 text-sm" 
+                        value={editForm.minorTrack} 
+                        onChange={(e) => setEditForm({...editForm, minorTrack: e.target.value, isHonors: e.target.value !== '' ? false : editForm.isHonors})}
+                      >
+                        <option value="">Not for Minor</option>
+                        {declaredMinors.map(m => <option key={m} value={m}>{m} Minor</option>)}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4 border-t mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white font-bold rounded hover:bg-blue-700"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <h2 className="text-3xl font-bold text-blue-900 mb-2">Log Past Courses</h2>
       <p className="text-gray-500 mb-8">Record completed courses. P/F courses are excluded from CPI.</p>
 
@@ -139,7 +234,7 @@ export default function CourseHistory() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Select Course</label>
-              <select className="w-full p-2 border rounded bg-gray-50" value={formData.courseId} onChange={(e) => setFormData({...formData, courseId: e.target.value})}>
+              <select className="w-full p-2 border rounded bg-gray-50 text-sm" value={formData.courseId} onChange={(e) => setFormData({...formData, courseId: e.target.value})}>
                 {courses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.title}</option>)}
               </select>
             </div>
@@ -159,14 +254,34 @@ export default function CourseHistory() {
               </div>
             </div>
 
-            {/* CONDITIONAL RENDER: Only show if user has declared at least 1 minor */}
-            {declaredMinors.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Declare for Minor (Optional)</label>
-                <select className="w-full p-2 border border-purple-200 rounded bg-purple-50 text-purple-800" value={formData.minorTrack} onChange={(e) => setFormData({...formData, minorTrack: e.target.value})}>
-                  <option value="">Not for Minor</option>
-                  {declaredMinors.map(m => <option key={m} value={m}>{m} Minor</option>)}
-                </select>
+            {/* CONDITIONAL RENDER: Honors & Minors */}
+            {(honorsDeclared || declaredMinors.length > 0) && (
+              <div className="flex flex-col gap-3 pt-4 border-t mt-4">
+                {honorsDeclared && (
+                  <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={formData.isHonors}
+                      onChange={(e) => setFormData({...formData, isHonors: e.target.checked, minorTrack: e.target.checked ? '' : formData.minorTrack})}
+                      className="rounded text-blue-600 w-4 h-4"
+                    />
+                    <span className="font-medium">Count towards Honors</span>
+                  </label>
+                )}
+
+                {declaredMinors.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 mt-1">Declare for Minor</label>
+                    <select 
+                      className="w-full p-2 border border-purple-200 rounded bg-purple-50 text-purple-800 text-sm" 
+                      value={formData.minorTrack} 
+                      onChange={(e) => setFormData({...formData, minorTrack: e.target.value, isHonors: e.target.value !== '' ? false : formData.isHonors})}
+                    >
+                      <option value="">Not for Minor</option>
+                      {declaredMinors.map(m => <option key={m} value={m}>{m} Minor</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
             )}
 
@@ -194,69 +309,38 @@ export default function CourseHistory() {
                 <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                   <div className="overflow-hidden">
                     <div className="px-5 pb-5 pt-0 space-y-3">
-                      {semRecords.map(record => {
-                        const isEditing = editingRecordId === record.id;
-                        
-                        return (
-                          <div key={record.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-gray-800 block text-sm">{record.course?.code}</span>
-                                {record.minorTrack && !isEditing && (
-                                  <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full border border-purple-200">
-                                    {record.minorTrack} Minor
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-gray-500 text-xs">{record.course?.title}</span>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              {isEditing ? (
-                                <>
-                                  <select 
-                                    className="p-1 border border-blue-300 rounded text-sm font-bold text-blue-700 bg-white"
-                                    value={editGrade}
-                                    onChange={(e) => setEditGrade(e.target.value)}
-                                  >
-                                    {gradingScale.map(g => <option key={g} value={g}>{g}</option>)}
-                                  </select>
-                                  
-                                  {/* CONDITIONAL RENDER: Only show Minor edit if user has declared minors */}
-                                  {declaredMinors.length > 0 && (
-                                    <select 
-                                      className="p-1 border border-purple-300 rounded text-sm font-bold text-purple-700 bg-purple-50"
-                                      value={editMinorTrack}
-                                      onChange={(e) => setEditMinorTrack(e.target.value)}
-                                    >
-                                      <option value="">No Minor</option>
-                                      {declaredMinors.map(m => <option key={m} value={m}>{m} Minor</option>)}
-                                    </select>
-                                  )}
-
-                                  <button onClick={() => handleSaveEdit(record.id)} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100 border border-green-200">Save</button>
-                                  <button onClick={() => setEditingRecordId(null)} className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded hover:bg-gray-100 border border-gray-200">Cancel</button>
-                                </>
-                              ) : (
-                                <>
-                                  <span className="font-black text-blue-700 bg-blue-50 px-2 py-1 rounded text-sm">{record.grade}</span>
-                                  <button 
-                                    onClick={() => {
-                                      setEditingRecordId(record.id);
-                                      setEditGrade(record.grade);
-                                      setEditMinorTrack(record.minorTrack || '');
-                                    }}
-                                    className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 border border-blue-200 ml-2"
-                                  >
-                                    Edit
-                                  </button>
-                                  <button onClick={() => handleDelete(record.id)} className="text-gray-400 hover:text-red-600 transition-colors ml-1 px-1" title="Delete Course">✕</button>
-                                </>
+                      {semRecords.map(record => (
+                        <div key={record.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-bold text-gray-800 block text-sm">{record.course?.code}</span>
+                              
+                              {record.isHonors && (
+                                <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200">
+                                  HONORS
+                                </span>
+                              )}
+                              {record.minorTrack && (
+                                <span className="text-[10px] font-bold text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200">
+                                  {record.minorTrack} MINOR
+                                </span>
                               )}
                             </div>
+                            <span className="text-gray-500 text-xs">{record.course?.title}</span>
                           </div>
-                        );
-                      })}
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-blue-700 bg-blue-50 px-2 py-1 rounded text-sm">{record.grade}</span>
+                            <button 
+                              onClick={() => handleEditClick(record)}
+                              className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 border border-blue-200 ml-2 transition"
+                            >
+                              Edit
+                            </button>
+                            <button onClick={() => handleDelete(record.id)} className="text-gray-400 hover:text-red-600 transition-colors ml-1 px-1" title="Delete Course">✕</button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
