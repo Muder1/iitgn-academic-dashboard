@@ -49,7 +49,7 @@ router.get('/analysis', verifyIITGN, async (req, res) => {
 
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    // FIX 1: Safely map the user's discipline string
+    // Safely map the user's discipline string
     const fullBranchName = getFullBranchName(user.discipline);
 
     // Fetch the requirements
@@ -79,9 +79,21 @@ router.get('/analysis', verifyIITGN, async (req, res) => {
 
     // Fill the buckets with the user's records
     user.records.forEach(record => {
-      const basketName = record.course?.basket?.name || 'Uncategorized';
+      let basketName = record.course?.basket?.name || 'Uncategorized';
       const credits = record.course?.credits || 0;
+      
+      // Grab the array of branches this course belongs to
+      const courseBranches = record.course?.branches || [];
 
+      // --- CROSS-BRANCH INTERCEPTION RULE ---
+      // If it's a Core course, but the user's branch is NOT in the course's branches array,
+      // it counts as an Open Elective for this specific user.
+      if (basketName === 'Core' && courseBranches.length > 0 && !courseBranches.includes(fullBranchName)) {
+        basketName = 'Open Elective';
+      }
+      // --------------------------------------
+
+      // Ensure the bucket exists (in case they take an Open Elective but haven't been assigned a target yet)
       if (!analysis[basketName]) {
         analysis[basketName] = { required: 0, completed: 0, planned: 0, courses: [] };
       }
@@ -101,7 +113,7 @@ router.get('/analysis', verifyIITGN, async (req, res) => {
       });
     });
 
-    // FIX 2: Explicitly assign the correct true total instead of summing baskets
+    // Explicitly assign the correct true total instead of summing baskets
     const trueTotalTarget = getAbsoluteTotal(user.admissionYear, fullBranchName);
 
     res.json({ analysis, totalTarget: trueTotalTarget });
