@@ -101,7 +101,7 @@ router.get('/analysis', verifyIITGN, async (req, res) => {
 
       // --- FIX: CROSS-BRANCH INTERCEPTION RULE ---
       // Compare the abbreviation array against the user's abbreviation
-      if (basketName === 'Core' && courseBranches.length > 0 && !courseBranches.includes(userAbbrev)) {
+      if (basketName === 'Discipline Core' && courseBranches.length > 0 && !courseBranches.includes(userAbbrev)) {
         basketName = 'Open Elective';
       }
       // -------------------------------------------
