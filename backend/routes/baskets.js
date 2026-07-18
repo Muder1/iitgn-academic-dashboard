@@ -5,7 +5,7 @@ const verifyIITGN = require('../middleware/auth');
 
 const prisma = new PrismaClient();
 
-// Helper dictionary to convert common abbreviations to DB strings
+// Helper to convert abbreviation to Full Name (Needed for Curriculum lookup)
 const getFullBranchName = (abbreviation) => {
   const branchMap = {
     'CSE': 'Computer Science & Engineering',
@@ -17,22 +17,34 @@ const getFullBranchName = (abbreviation) => {
     'AI': 'Artificial Intelligence',
     'ICDT': 'Integrated Circuit Design'
   };
-  // Return the mapped name, or the original if it's already spelled out
   return branchMap[abbreviation?.toUpperCase()] || abbreviation;
+};
+
+// NEW HELPER: Convert Full Name to abbreviation (Needed for the Open Elective logic)
+const getBranchAbbrev = (name) => {
+  const reverseMap = {
+    'Computer Science & Engineering': 'CSE',
+    'Mechanical Engineering': 'ME',
+    'Civil Engineering': 'CE',
+    'Electrical Engineering': 'EE',
+    'Chemical Engineering': 'CL',
+    'Materials Engineering': 'MSE',
+    'Artificial Intelligence': 'AI',
+    'Integrated Circuit Design': 'ICDT'
+  };
+  // If it's already an abbreviation, the map returns undefined, so we just uppercase it
+  return reverseMap[name] || name?.toUpperCase();
 };
 
 // Helper to get the true absolute total graduation requirement
 const getAbsoluteTotal = (year, branchName) => {
   if (year >= 2025) {
-    // 2025+ Cohort is 173 for everyone except Civil (171)
     return branchName === 'Civil Engineering' ? 171 : 173;
   } else {
-    // 2022-2024 Cohort logic
     if (['Electrical Engineering', 'Artificial Intelligence', 'Mechanical Engineering', 'Integrated Circuit Design'].includes(branchName)) {
-      // EE bumped to 172 in 2024, but we'll use 172 as standard for these branches
       return 172; 
     }
-    return 170; // Standard for CS, CE, CL, MSE
+    return 170;
   }
 };
 
@@ -49,8 +61,11 @@ router.get('/analysis', verifyIITGN, async (req, res) => {
 
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    // Safely map the user's discipline string
+    // 1. Get the FULL name to query the curriculum targets accurately
     const fullBranchName = getFullBranchName(user.discipline);
+    
+    // 2. Get the ABBREVIATION to check against the course.branches array
+    const userAbbrev = getBranchAbbrev(user.discipline);
 
     // Fetch the requirements
     const requirements = await prisma.curriculumRequirement.findMany({
@@ -82,18 +97,16 @@ router.get('/analysis', verifyIITGN, async (req, res) => {
       let basketName = record.course?.basket?.name || 'Uncategorized';
       const credits = record.course?.credits || 0;
       
-      // Grab the array of branches this course belongs to
       const courseBranches = record.course?.branches || [];
 
-      // --- CROSS-BRANCH INTERCEPTION RULE ---
-      // If it's a Core course, but the user's branch is NOT in the course's branches array,
-      // it counts as an Open Elective for this specific user.
-      if (basketName === 'Discipline Core' && courseBranches.length > 0 && !courseBranches.includes(fullBranchName)) {
+      // --- FIX: CROSS-BRANCH INTERCEPTION RULE ---
+      // Compare the abbreviation array against the user's abbreviation
+      if (basketName === 'Core' && courseBranches.length > 0 && !courseBranches.includes(userAbbrev)) {
         basketName = 'Open Elective';
       }
-      // --------------------------------------
+      // -------------------------------------------
 
-      // Ensure the bucket exists (in case they take an Open Elective but haven't been assigned a target yet)
+      // Ensure the bucket exists
       if (!analysis[basketName]) {
         analysis[basketName] = { required: 0, completed: 0, planned: 0, courses: [] };
       }
@@ -113,7 +126,6 @@ router.get('/analysis', verifyIITGN, async (req, res) => {
       });
     });
 
-    // Explicitly assign the correct true total instead of summing baskets
     const trueTotalTarget = getAbsoluteTotal(user.admissionYear, fullBranchName);
 
     res.json({ analysis, totalTarget: trueTotalTarget });
