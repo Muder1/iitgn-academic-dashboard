@@ -88,7 +88,7 @@ router.get('/analysis', verifyIITGN, async (req, res) => {
       // --- CROSS-BRANCH INTERCEPTION RULE ---
       // If it's a Core course, but the user's branch is NOT in the course's branches array,
       // it counts as an Open Elective for this specific user.
-      if (basketName === 'Core' && courseBranches.length > 0 && !courseBranches.includes(fullBranchName)) {
+      if (basketName === 'Discipline Core' && courseBranches.length > 0 && !courseBranches.includes(fullBranchName)) {
         basketName = 'Open Elective';
       }
       // --------------------------------------
