@@ -18,6 +18,35 @@ const gradePoints = {
   'F': 0
 };
 
+// HELPER: Convert abbreviation to Full Name
+const getFullBranchName = (abbreviation) => {
+  const branchMap = {
+    'CSE': 'Computer Science & Engineering',
+    'ME': 'Mechanical Engineering',
+    'CE': 'Civil Engineering',
+    'EE': 'Electrical Engineering',
+    'CL': 'Chemical Engineering',
+    'MSE': 'Materials Engineering',
+    'AI': 'Artificial Intelligence',
+    'ICDT': 'Integrated Circuit Design'
+  };
+  return branchMap[abbreviation?.toUpperCase()] || abbreviation;
+};
+
+// HELPER: Get the true absolute total graduation requirement
+const getAbsoluteTotal = (year, branchName) => {
+  if (year >= 2025) {
+    // 2025+ Cohort is 173 for everyone except Civil (171)
+    return branchName === 'Civil Engineering' ? 171 : 173;
+  } else {
+    // 2022-2024 Cohort logic
+    if (['Electrical Engineering', 'Artificial Intelligence', 'Mechanical Engineering', 'Integrated Circuit Design'].includes(branchName)) {
+      return 172; 
+    }
+    return 170; // Standard for CS, CE, CL, MSE
+  }
+};
+
 router.get('/', verifyIITGN, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
@@ -40,7 +69,10 @@ router.get('/', verifyIITGN, async (req, res) => {
 
     const completedCredits = completedRecords.reduce((sum, r) => sum + (r.course?.credits || 0), 0);
     const plannedCredits = plannedRecords.reduce((sum, r) => sum + (r.course?.credits || 0), 0);
-    const targetCredits = 172; 
+    
+    // FIXED: Dynamically calculate the target credits based on the user's branch and year
+    const fullBranchName = getFullBranchName(user.discipline);
+    const targetCredits = getAbsoluteTotal(user.admissionYear, fullBranchName);
 
     // CGPA CALCULATION ENGINE
     let totalQualityPoints = 0;
@@ -68,12 +100,12 @@ router.get('/', verifyIITGN, async (req, res) => {
         email: user.email,
         admissionYear: user.admissionYear,
         discipline: user.discipline,
-        declaredMinors: user.declaredMinors || [] // RETAINED: Required for the frontend Minor dropdown
+        declaredMinors: user.declaredMinors || []
       },
       stats: {
         completedCredits,
         plannedCredits,
-        targetCredits,
+        targetCredits, // Now sending the dynamically calculated target!
         coursesTaken: completedRecords.length,
         cgpa: currentCGPA
       },
