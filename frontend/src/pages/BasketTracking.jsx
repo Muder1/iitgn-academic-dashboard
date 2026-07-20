@@ -14,7 +14,6 @@ export default function BasketTracking() {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/baskets/analysis`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        // We now store the entire response object { analysis, totalTarget }
         setAuditData(res.data);
       } catch (error) {
         console.error("Error fetching basket data", error);
@@ -31,7 +30,6 @@ export default function BasketTracking() {
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 mt-4 md:mt-6">
       
-      {/* Header & New Total Target Badge */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h2 className="text-3xl font-bold text-blue-900 mb-1">Curriculum Basket Audit</h2>
@@ -45,7 +43,6 @@ export default function BasketTracking() {
 
       {/* Grid of Baskets */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* We explicitly loop over auditData.analysis now */}
         {Object.entries(auditData.analysis).map(([basketName, data]) => {
           const totalEarned = data.completed + data.planned;
           const completedWidth = Math.min(100, (data.completed / data.required) * 100) || 0;

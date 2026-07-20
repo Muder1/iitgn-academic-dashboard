@@ -5,7 +5,7 @@ const verifyIITGN = require('../middleware/auth');
 
 const prisma = new PrismaClient();
 
-// CUSTOM MIDDLEWARE: Check if user is an Admin
+// Check if user is an Admin
 const verifyAdmin = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.uid } });
@@ -20,7 +20,7 @@ const verifyAdmin = async (req, res, next) => {
 };
 
 // ==========================================
-// NEW: GET /api/admin/baskets - Fetch Baskets for Dropdown
+// GET /api/admin/baskets - Fetch Baskets for Dropdown
 // ==========================================
 router.get('/baskets', verifyIITGN, verifyAdmin, async (req, res) => {
   try {
@@ -39,7 +39,6 @@ router.get('/baskets', verifyIITGN, verifyAdmin, async (req, res) => {
 // ==========================================
 router.post('/courses', verifyIITGN, verifyAdmin, async (req, res) => {
   try {
-    // FIX 1: Changed 'branch' to 'branches' to match frontend and schema
     const { code, title, credits, basketId, branches } = req.body;
 
     const branchArray = Array.isArray(branches) 
@@ -59,7 +58,7 @@ router.post('/courses', verifyIITGN, verifyAdmin, async (req, res) => {
     
     res.status(201).json(newCourse);
   } catch (error) {
-    console.error("Database error:", error); // Helpful for debugging
+    console.error("Database error:", error); // For debugging
     if (error.code === 'P2002') return res.status(400).json({ error: 'Course code already exists.' });
     res.status(500).json({ error: 'Failed to create course.' });
   }
@@ -72,7 +71,6 @@ router.delete('/courses/:id', verifyIITGN, verifyAdmin, async (req, res) => {
   try {
     const courseId = req.params.id;
     
-    // FIX 2: Removed CourseBasket deletion since that table no longer exists!
     // Note: Deleting a course might still fail if students already have it in their AcademicRecord history.
     await prisma.course.delete({ where: { id: courseId } });
     
@@ -91,14 +89,13 @@ router.put('/courses/:id', verifyIITGN, verifyAdmin, async (req, res) => {
     const courseId = req.params.id;
     const { code, title, credits, basketId, branches } = req.body;
 
-    // Format branches properly just like in the POST route
     const branchArray = Array.isArray(branches) 
       ? branches 
       : branches.split(',').map(b => b.trim()).filter(b => b !== '');
     
     // Update the course in the database
     const updatedCourse = await prisma.course.update({
-      where: { id: courseId }, // Use parseInt(courseId) if your ID is an integer
+      where: { id: courseId },
       data: { 
         code: code.toUpperCase(), 
         title, 

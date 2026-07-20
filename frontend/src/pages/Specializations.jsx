@@ -87,7 +87,6 @@ export default function Specializations() {
             <span className={`font-bold ${textColor}`}>{specData.creditsEarned} / {specData.required}</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-            {/* FIXED: Applied bg color class directly */}
             <div 
               className={`h-full rounded-full transition-all duration-1000 ${bgColor.replace('bg-', 'bg-').replace('100', '500')}`}
               style={{ width: `${progress}%` }}

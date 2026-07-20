@@ -8,7 +8,6 @@ const prisma = new PrismaClient();
 // GET /api/specializations - Fetch progress and user declarations
 router.get('/', verifyIITGN, async (req, res) => {
   try {
-    // FIXED: Changed pursuingMinor to declaredMinors to match the new schema
     const user = await prisma.user.findUnique({
       where: { id: req.user.uid },
       select: { pursuingHonors: true, declaredMinors: true } 
@@ -32,7 +31,6 @@ router.get('/', verifyIITGN, async (req, res) => {
     res.json({
       declarations: {
         honors: user?.pursuingHonors || false,
-        // NEW: Return the array of minors, fallback to an empty array
         declaredMinors: user?.declaredMinors || []
       },
       honors: {
@@ -55,14 +53,13 @@ router.get('/', verifyIITGN, async (req, res) => {
 // POST /api/specializations/declare - Update declarations
 router.post('/declare', verifyIITGN, async (req, res) => {
   try {
-    // FIXED: Now expecting an array named 'declaredMinors' instead of 'pursuingMinor'
     const { pursuingHonors, declaredMinors } = req.body;
     
     await prisma.user.update({
       where: { id: req.user.uid },
       data: { 
         pursuingHonors, 
-        declaredMinors: declaredMinors || [] // Save the array to DB
+        declaredMinors: declaredMinors || []
       }
     });
     

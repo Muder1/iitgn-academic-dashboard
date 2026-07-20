@@ -99,12 +99,10 @@ router.get('/analysis', verifyIITGN, async (req, res) => {
       
       const courseBranches = record.course?.branches || [];
 
-      // --- FIX: CROSS-BRANCH INTERCEPTION RULE ---
       // Compare the abbreviation array against the user's abbreviation
       if (basketName === 'Discipline Core' && courseBranches.length > 0 && !courseBranches.includes(userAbbrev)) {
         basketName = 'Open Elective';
       }
-      // -------------------------------------------
 
       // Ensure the bucket exists
       if (!analysis[basketName]) {

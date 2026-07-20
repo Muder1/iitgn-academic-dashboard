@@ -9,7 +9,7 @@ export default function CourseHistory() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
   
-  // States for Dialog Box (Modal) Editing
+  // States for Dialog Box Editing
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({ id: null, code: '', title: '', grade: 'A', isHonors: false, minorTrack: '' });
   
@@ -85,7 +85,6 @@ export default function CourseHistory() {
       });
       setMessage("Successfully logged course!");
       
-      // Auto-open the semester we just added to
       setOpenSemesters(prev => ({ ...prev, [formData.semester]: true }));
       
       setFormData(prev => ({ ...prev, minorTrack: '', isHonors: false })); 
@@ -248,7 +247,7 @@ export default function CourseHistory() {
           </form>
         </div>
 
-        {/* ACCORDION HISTORY */}
+        {/* Semster History */}
         <div className="space-y-4">
           <h3 className="font-bold text-lg mb-4 text-gray-700">History by Semester</h3>
           {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => {

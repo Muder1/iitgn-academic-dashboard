@@ -94,7 +94,6 @@ function AppContent() {
             
             {/* Desktop Controls (Toggle & Logout) */}
             <div className="hidden md:flex items-center space-x-4">
-              {/* NOTE: You might want to wrap this button in a condition like {currentUser.isAdmin && (...)} later */}
               <button 
                 onClick={handleSwitchMode}
                 className={`text-xs font-bold px-3 py-1.5 rounded transition ${

@@ -7,7 +7,7 @@ try {
     credential: cert(serviceAccount)
   });
 } catch (error) {
-  // Ignore the "default app already exists
+  // Ignore the default app already exists
   if (!/already exists/.test(error.message)) {
     console.error('Firebase initialization error', error.stack);
   }
@@ -23,7 +23,7 @@ const verifyIITGN = async (req, res, next) => {
   const idToken = authHeader.split('Bearer ')[1];
 
   try {
-    // 1. Verify the token with the new getAuth() method
+    // 1. Verify the token with the getAuth() method
     const decodedToken = await getAuth().verifyIdToken(idToken);
 
     // 2. Enforce the IITGN domain rule

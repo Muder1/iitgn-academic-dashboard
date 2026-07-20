@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import axios from 'axios';
 
-// NEW HELPER: Convert Full Name to abbreviation for frontend comparison
+//  Convert Full Name to abbreviation for frontend comparison
 const getBranchAbbrev = (name) => {
   const reverseMap = {
     'Computer Science & Engineering': 'CSE',
@@ -25,7 +25,6 @@ export default function SemesterPlanner() {
   const [honorsDeclared, setHonorsDeclared] = useState(false);
   const [declaredMinors, setDeclaredMinors] = useState([]);
   
-  // New state to hold the current user's branch abbreviation
   const [userAbbrev, setUserAbbrev] = useState('');
   
   const [formData, setFormData] = useState({ courseId: '', semester: '2', isHonors: false, minorTrack: '' });
@@ -65,12 +64,12 @@ export default function SemesterPlanner() {
 
   useEffect(() => { fetchData(); }, []);
 
-  // UI HELPER: Determines the correct basket name to display
+  // Determines the correct basket name to display
   const getDisplayBasket = (course) => {
     let bName = course?.basket?.name || 'Uncategorized';
     const cBranches = course?.branches || [];
     
-    // Cross-Branch Interception Rule for Frontend UI
+    // Cross-Branch Interception Rule
     if ((bName === 'Core' || bName === 'Discipline Core') && cBranches.length > 0 && !cBranches.includes(userAbbrev)) {
       return 'Open Elective';
     }
@@ -178,7 +177,7 @@ export default function SemesterPlanner() {
           </form>
         </div>
 
-        {/* Planned Courses Accordion List */}
+        {/* Planned Courses List */}
         <div className="md:col-span-2 space-y-4">
           <div className="flex justify-between items-end mb-2">
             <h3 className="font-bold text-lg">Your Projected Roadmap</h3>

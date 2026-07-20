@@ -70,7 +70,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800">
 
-      {/* NEW: PROFILE EDIT MODAL */}
+      {/* PROFILE EDIT MODAL */}
       {isEditModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
@@ -133,7 +133,6 @@ export default function Dashboard() {
       <nav className="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
         <h1 className="text-xl font-bold text-blue-900">IITGN Academic Dashboard</h1>
         <div className="flex items-center gap-4">
-          {/* UPDATED: Profile info with an Edit Button */}
           {/* Profile info with Edit & Export Buttons */}
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-gray-700">
@@ -148,7 +147,7 @@ export default function Dashboard() {
               Edit
             </button>
 
-            {/* NEW: Export PDF Button */}
+            {/* Export PDF Button */}
             <button 
               onClick={() => generateTranscript(data.user, data.records)}
               className="text-xs font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded hover:bg-gray-200 border border-gray-300 transition flex items-center gap-1"
@@ -186,7 +185,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 3. PROGRESS BAR */}
+        {/* 2. PROGRESS BAR */}
         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-8">
           <h3 className="text-lg font-bold mb-4">Graduation Progress</h3>
           <div className="w-full bg-gray-200 rounded-full h-4 mb-2 overflow-hidden flex">
@@ -207,7 +206,7 @@ export default function Dashboard() {
           </div>
         </div>
         
-        {/* 4. RECENT COURSES TABLE */}
+        {/* 3. RECENT COURSES TABLE */}
         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
           <h3 className="text-lg font-bold mb-4">Recently Logged Courses</h3>
           

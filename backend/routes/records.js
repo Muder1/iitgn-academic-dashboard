@@ -25,7 +25,6 @@ router.get('/courses', async (req, res) => {
 // POST /api/records
 router.post('/', verifyIITGN, async (req, res) => {
   try {
-    // NEW: Extracted minorTrack from the incoming request body
     const { courseId, semester, grade, status, isHonors, isMinor, minorTrack } = req.body;
 
     const newRecord = await prisma.academicRecord.create({
@@ -35,7 +34,7 @@ router.post('/', verifyIITGN, async (req, res) => {
         semester: parseInt(semester),
         grade: grade || null,
         status: status || 'COMPLETED',
-        isHonors: isHonors || false,     // Ensuring honors is passed properly
+        isHonors: isHonors || false, 
         isMinor: isMinor || false,
         minorTrack: minorTrack || null   // Saving the specific minor name (e.g., "Computer Science")
       }
@@ -68,7 +67,6 @@ router.delete('/:id', verifyIITGN, async (req, res) => {
 // ==========================================
 router.put('/:id', verifyIITGN, async (req, res) => {
   try {
-    // NEW: Extracting all tags from the request body
     const { grade, isGraded, isHonors, isMinor, minorTrack } = req.body;
     
     const updatedRecord = await prisma.academicRecord.update({

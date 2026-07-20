@@ -70,7 +70,6 @@ router.get('/', verifyIITGN, async (req, res) => {
     const completedCredits = completedRecords.reduce((sum, r) => sum + (r.course?.credits || 0), 0);
     const plannedCredits = plannedRecords.reduce((sum, r) => sum + (r.course?.credits || 0), 0);
     
-    // FIXED: Dynamically calculate the target credits based on the user's branch and year
     const fullBranchName = getFullBranchName(user.discipline);
     const targetCredits = getAbsoluteTotal(user.admissionYear, fullBranchName);
 
@@ -105,7 +104,7 @@ router.get('/', verifyIITGN, async (req, res) => {
       stats: {
         completedCredits,
         plannedCredits,
-        targetCredits, // Now sending the dynamically calculated target!
+        targetCredits,
         coursesTaken: completedRecords.length,
         cgpa: currentCGPA
       },

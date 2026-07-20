@@ -71,7 +71,7 @@ export default function CPIPredictor() {
     const predictedGrade = hypotheticalGrades[r.id] || 'A';
     const points = gradePoints[predictedGrade]; // Will be undefined if 'P' is selected
     
-    // CRITICAL: Only add credits if it is a standard graded course
+    // Only add credits if it is a standard graded course
     if (points !== undefined) {
       projectedPoints += (credits * points);
       projectedCredits += credits;
