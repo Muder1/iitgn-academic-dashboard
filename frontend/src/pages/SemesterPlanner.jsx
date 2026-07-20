@@ -2,6 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import axios from 'axios';
 
+// NEW HELPER: Convert Full Name to abbreviation for frontend comparison
+const getBranchAbbrev = (name) => {
+  const reverseMap = {
+    'Computer Science & Engineering': 'CSE',
+    'Mechanical Engineering': 'ME',
+    'Civil Engineering': 'CE',
+    'Electrical Engineering': 'EE',
+    'Chemical Engineering': 'CL',
+    'Materials Engineering': 'MSE',
+    'Artificial Intelligence': 'AI',
+    'Integrated Circuit Design': 'ICDT'
+  };
+  return reverseMap[name] || name?.toUpperCase();
+};
+
 export default function SemesterPlanner() {
   const { currentUser } = useAuth();
   const [courses, setCourses] = useState([]);
@@ -10,9 +25,10 @@ export default function SemesterPlanner() {
   const [honorsDeclared, setHonorsDeclared] = useState(false);
   const [declaredMinors, setDeclaredMinors] = useState([]);
   
-  const [formData, setFormData] = useState({ courseId: '', semester: '2', isHonors: false, minorTrack: '' });
+  // New state to hold the current user's branch abbreviation
+  const [userAbbrev, setUserAbbrev] = useState('');
   
-  // State to manage accordion dropdowns
+  const [formData, setFormData] = useState({ courseId: '', semester: '2', isHonors: false, minorTrack: '' });
   const [openSemesters, setOpenSemesters] = useState({});
 
   const fetchData = async () => {
@@ -35,6 +51,9 @@ export default function SemesterPlanner() {
         .filter(r => r.status === 'PLANNED')
         .sort((a, b) => a.semester - b.semester);
       setPlannedRecords(planned);
+      
+      // Store the user's abbreviation for the UI logic
+      setUserAbbrev(getBranchAbbrev(dashboardRes.data.user?.discipline));
 
       setHonorsDeclared(specRes.data.declarations.honors || false);
       setDeclaredMinors(specRes.data.declarations.declaredMinors || []);
@@ -46,7 +65,18 @@ export default function SemesterPlanner() {
 
   useEffect(() => { fetchData(); }, []);
 
-  // Group planned records by semester
+  // UI HELPER: Determines the correct basket name to display
+  const getDisplayBasket = (course) => {
+    let bName = course?.basket?.name || 'Uncategorized';
+    const cBranches = course?.branches || [];
+    
+    // Cross-Branch Interception Rule for Frontend UI
+    if ((bName === 'Core' || bName === 'Discipline Core') && cBranches.length > 0 && !cBranches.includes(userAbbrev)) {
+      return 'Open Elective';
+    }
+    return bName;
+  };
+
   const groupedPlannedRecords = plannedRecords.reduce((acc, record) => {
     const sem = record.semester;
     if (!acc[sem]) acc[sem] = [];
@@ -72,9 +102,7 @@ export default function SemesterPlanner() {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // Auto-open the dropdown for the semester that was just added to
       setOpenSemesters(prev => ({ ...prev, [formData.semester]: true }));
-
       setFormData(prev => ({ ...prev, isHonors: false, minorTrack: '' }));
       fetchData(); 
     } catch (error) {
@@ -102,9 +130,6 @@ export default function SemesterPlanner() {
           <h2 className="text-3xl font-bold text-blue-900">Semester Planner</h2>
           <p className="text-gray-500 mt-1">Draft your future semesters and track degree requirements.</p>
         </div>
-        <span className="bg-orange-100 text-orange-800 px-4 py-2 rounded-full font-bold shadow-sm hidden md:block">
-          Sandbox Mode
-        </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -173,7 +198,6 @@ export default function SemesterPlanner() {
                 const semRecords = groupedPlannedRecords[sem];
                 const isOpen = openSemesters[sem];
                 
-                // CALCULATE CREDITS PER SEMESTER HERE
                 const semCredits = semRecords.reduce((sum, r) => sum + (r.course?.credits || 0), 0);
 
                 return (
@@ -195,7 +219,12 @@ export default function SemesterPlanner() {
                               <div>
                                 <div className="flex items-center gap-2 mb-1">
                                   <span className="font-bold text-gray-800 text-sm">{record.course?.code}</span>
-                                  <span className="text-[10px] uppercase font-bold text-gray-500 border px-1 rounded">{record.course?.basket?.name || 'Uncategorized'}</span>
+                                  
+                                  {/* DYNAMIC BASKET RENDER HERE */}
+                                  <span className="text-[10px] uppercase font-bold text-gray-500 border px-1 rounded">
+                                    {getDisplayBasket(record.course)}
+                                  </span>
+                                  
                                   {record.isHonors && <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-1.5 py-0.5 rounded">HONORS</span>}
                                   {record.minorTrack && <span className="bg-orange-100 text-orange-700 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase">{record.minorTrack} MINOR</span>}
                                 </div>
