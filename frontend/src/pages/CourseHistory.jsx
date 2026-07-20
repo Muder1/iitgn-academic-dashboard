@@ -16,7 +16,6 @@ export default function CourseHistory() {
   const [records, setRecords] = useState([]);
   const [courses, setCourses] = useState([]);
   
-  // Declaration tracking
   const [declaredMinors, setDeclaredMinors] = useState([]); 
   const [honorsDeclared, setHonorsDeclared] = useState(false);
   
@@ -31,12 +30,8 @@ export default function CourseHistory() {
       
       const [courseRes, dashboardRes, specRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/api/records/courses`),
-        axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${import.meta.env.VITE_API_URL}/api/specializations`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${import.meta.env.VITE_API_URL}/api/specializations`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       
       const sortedCourses = courseRes.data.sort((a, b) => a.code.localeCompare(b.code));
@@ -90,6 +85,9 @@ export default function CourseHistory() {
       });
       setMessage("Successfully logged course!");
       
+      // Auto-open the semester we just added to
+      setOpenSemesters(prev => ({ ...prev, [formData.semester]: true }));
+      
       setFormData(prev => ({ ...prev, minorTrack: '', isHonors: false })); 
       fetchData(); 
     } catch (err) {
@@ -108,7 +106,6 @@ export default function CourseHistory() {
     } catch (err) { alert("Failed to delete."); }
   };
 
-  // Open the Modal and populate data
   const handleEditClick = (record) => {
     setEditForm({
       id: record.id,
@@ -121,7 +118,6 @@ export default function CourseHistory() {
     setIsEditModalOpen(true);
   };
 
-  // Submit edits from the Modal
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     try {
@@ -149,7 +145,7 @@ export default function CourseHistory() {
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 mt-4 md:mt-10 relative">
       
-      {/* DIALOG BOX (MODAL) FOR EDITING */}
+      {/* EDIT MODAL */}
       {isEditModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
@@ -159,39 +155,23 @@ export default function CourseHistory() {
             <form onSubmit={handleSaveEdit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Grade</label>
-                <select 
-                  className="w-full p-2 border rounded bg-gray-50 font-bold text-blue-700"
-                  value={editForm.grade}
-                  onChange={(e) => setEditForm({...editForm, grade: e.target.value})}
-                >
+                <select className="w-full p-2 border rounded bg-gray-50 font-bold text-blue-700" value={editForm.grade} onChange={(e) => setEditForm({...editForm, grade: e.target.value})}>
                   {gradingScale.map(g => <option key={g} value={g}>{g}</option>)}
                 </select>
               </div>
 
-              {/* Modal Declarations (Honors/Minors) */}
               {(honorsDeclared || declaredMinors.length > 0) && (
                 <div className="flex flex-col gap-3 pt-3 border-t mt-3">
-                  
                   {honorsDeclared && (
                     <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={editForm.isHonors}
-                        onChange={(e) => setEditForm({...editForm, isHonors: e.target.checked, minorTrack: e.target.checked ? '' : editForm.minorTrack})}
-                        className="rounded text-blue-600 w-4 h-4"
-                      />
+                      <input type="checkbox" checked={editForm.isHonors} onChange={(e) => setEditForm({...editForm, isHonors: e.target.checked, minorTrack: e.target.checked ? '' : editForm.minorTrack})} className="rounded text-blue-600 w-4 h-4"/>
                       <span className="font-medium">Count towards Honors</span>
                     </label>
                   )}
-
                   {declaredMinors.length > 0 && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1 mt-1">Declare for Minor</label>
-                      <select 
-                        className="w-full p-2 border border-purple-200 rounded bg-purple-50 text-purple-800 text-sm" 
-                        value={editForm.minorTrack} 
-                        onChange={(e) => setEditForm({...editForm, minorTrack: e.target.value, isHonors: e.target.value !== '' ? false : editForm.isHonors})}
-                      >
+                      <select className="w-full p-2 border border-purple-200 rounded bg-purple-50 text-purple-800 text-sm" value={editForm.minorTrack} onChange={(e) => setEditForm({...editForm, minorTrack: e.target.value, isHonors: e.target.value !== '' ? false : editForm.isHonors})}>
                         <option value="">Not for Minor</option>
                         {declaredMinors.map(m => <option key={m} value={m}>{m} Minor</option>)}
                       </select>
@@ -201,19 +181,8 @@ export default function CourseHistory() {
               )}
 
               <div className="flex gap-3 pt-4 border-t mt-4">
-                <button 
-                  type="button" 
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded hover:bg-gray-200"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white font-bold rounded hover:bg-blue-700"
-                >
-                  Save Changes
-                </button>
+                <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded hover:bg-gray-200">Cancel</button>
+                <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white font-bold rounded hover:bg-blue-700">Save Changes</button>
               </div>
             </form>
           </div>
@@ -254,17 +223,11 @@ export default function CourseHistory() {
               </div>
             </div>
 
-            {/* CONDITIONAL RENDER: Honors & Minors */}
             {(honorsDeclared || declaredMinors.length > 0) && (
               <div className="flex flex-col gap-3 pt-4 border-t mt-4">
                 {honorsDeclared && (
                   <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={formData.isHonors}
-                      onChange={(e) => setFormData({...formData, isHonors: e.target.checked, minorTrack: e.target.checked ? '' : formData.minorTrack})}
-                      className="rounded text-blue-600 w-4 h-4"
-                    />
+                    <input type="checkbox" checked={formData.isHonors} onChange={(e) => setFormData({...formData, isHonors: e.target.checked, minorTrack: e.target.checked ? '' : formData.minorTrack})} className="rounded text-blue-600 w-4 h-4"/>
                     <span className="font-medium">Count towards Honors</span>
                   </label>
                 )}
@@ -272,11 +235,7 @@ export default function CourseHistory() {
                 {declaredMinors.length > 0 && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1 mt-1">Declare for Minor</label>
-                    <select 
-                      className="w-full p-2 border border-purple-200 rounded bg-purple-50 text-purple-800 text-sm" 
-                      value={formData.minorTrack} 
-                      onChange={(e) => setFormData({...formData, minorTrack: e.target.value, isHonors: e.target.value !== '' ? false : formData.isHonors})}
-                    >
+                    <select className="w-full p-2 border border-purple-200 rounded bg-purple-50 text-purple-800 text-sm" value={formData.minorTrack} onChange={(e) => setFormData({...formData, minorTrack: e.target.value, isHonors: e.target.value !== '' ? false : formData.isHonors})}>
                       <option value="">Not for Minor</option>
                       {declaredMinors.map(m => <option key={m} value={m}>{m} Minor</option>)}
                     </select>
@@ -297,15 +256,20 @@ export default function CourseHistory() {
             if (semRecords.length === 0) return null; 
             const isOpen = openSemesters[sem];
             
+            // CALCULATE CREDITS PER SEMESTER HERE
+            const semCredits = semRecords.reduce((sum, r) => sum + (r.course?.credits || 0), 0);
+            
             return (
               <div key={sem} className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden transition-all duration-300">
                 <button onClick={() => toggleSemester(sem)} className="w-full flex justify-between items-center p-5 bg-white hover:bg-gray-50 transition-colors font-bold text-gray-800">
                   <div className="flex items-center gap-3">
                     <span className="text-blue-600 bg-blue-50 px-3 py-1 rounded-md text-sm">Sem {sem}</span>
-                    <span className="text-gray-400 text-sm font-normal">{semRecords.length} courses</span>
+                    <span className="text-gray-600 text-sm font-bold">{semCredits} Credits</span>
+                    <span className="text-gray-400 text-sm font-normal hidden sm:block">• {semRecords.length} courses</span>
                   </div>
                   <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                 </button>
+                
                 <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                   <div className="overflow-hidden">
                     <div className="px-5 pb-5 pt-0 space-y-3">
@@ -315,28 +279,15 @@ export default function CourseHistory() {
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-bold text-gray-800 block text-sm">{record.course?.code}</span>
                               
-                              {record.isHonors && (
-                                <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200">
-                                  HONORS
-                                </span>
-                              )}
-                              {record.minorTrack && (
-                                <span className="text-[10px] font-bold text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200">
-                                  {record.minorTrack} MINOR
-                                </span>
-                              )}
+                              {record.isHonors && <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200">HONORS</span>}
+                              {record.minorTrack && <span className="text-[10px] font-bold text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded border border-orange-200">{record.minorTrack} MINOR</span>}
                             </div>
                             <span className="text-gray-500 text-xs">{record.course?.title}</span>
                           </div>
                           
                           <div className="flex items-center gap-2">
                             <span className="font-black text-blue-700 bg-blue-50 px-2 py-1 rounded text-sm">{record.grade}</span>
-                            <button 
-                              onClick={() => handleEditClick(record)}
-                              className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 border border-blue-200 ml-2 transition"
-                            >
-                              Edit
-                            </button>
+                            <button onClick={() => handleEditClick(record)} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 border border-blue-200 ml-2 transition">Edit</button>
                             <button onClick={() => handleDelete(record.id)} className="text-gray-400 hover:text-red-600 transition-colors ml-1 px-1" title="Delete Course">✕</button>
                           </div>
                         </div>
