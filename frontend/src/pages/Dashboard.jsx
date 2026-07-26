@@ -168,7 +168,7 @@ export default function Dashboard() {
         {/* 1. TOP METRIC CARDS (4 Columns) */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-gradient-to-br from-blue-900 to-blue-700 p-6 rounded-xl shadow-md text-white border border-blue-800">
-            <h3 className="text-sm text-blue-200 uppercase tracking-wider mb-2 font-semibold">Current CGPA</h3>
+            <h3 className="text-sm text-blue-200 uppercase tracking-wider mb-2 font-semibold">Current CPI</h3>
             <p className="text-4xl font-bold">{data.stats.cgpa}</p>
           </div>
           <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100">
